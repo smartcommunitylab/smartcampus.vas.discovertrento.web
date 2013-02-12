@@ -57,6 +57,9 @@ public class ServiceEventController extends AbstractObjectController {
 		if (obj.getFromTime() != null) {
 			customData.put("fromTime", obj.getFromTime());
 		}
+		if (obj.getTiming() != null) {
+			customData.put("timing", obj.getTiming());
+		}
 		if (obj.getToTime() != null) {
 			customData.put("toTime", obj.getToTime());
 		}
