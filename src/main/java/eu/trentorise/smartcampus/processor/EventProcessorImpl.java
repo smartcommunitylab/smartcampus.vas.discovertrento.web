@@ -370,6 +370,8 @@ public class EventProcessorImpl implements DomainUpdateListener {
 		if (data.get("fromTime") instanceof Long) eo.setFromTime((Long)data.get("fromTime"));
 		else if (data.get("fromTime") != null) eo.setFromTime(Long.parseLong(data.get("fromTime").toString()));
 		
+		eo.setTiming((String)data.get("timing"));
+		
 		if (data.get("toTime") instanceof Long) eo.setToTime((Long)data.get("toTime"));
 		else if (data.get("toTime") != null) eo.setToTime(Long.parseLong(data.get("toTime").toString()));
 
@@ -391,6 +393,10 @@ public class EventProcessorImpl implements DomainUpdateListener {
 			if (eo.getFromTime() == null && customData.containsKey("fromTime")) {
 				if (customData.get("fromTime") instanceof Long) eo.setFromTime((Long)customData.get("fromTime"));
 				else if (customData.get("fromTime") != null) eo.setFromTime(Long.parseLong(customData.get("fromTime").toString()));
+				eo.setFromTimeUserDefined(true);
+			}
+			if (eo.getTiming() == null && customData.containsKey("timing")) {
+				eo.setTiming((String)customData.get("timing"));
 				eo.setFromTimeUserDefined(true);
 			}
 			if (eo.getToTime() == null && customData.containsKey("toTime")) {

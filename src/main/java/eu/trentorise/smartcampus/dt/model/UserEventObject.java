@@ -51,6 +51,9 @@ public class UserEventObject extends EventObject {
 			result.setToTime(getToTime());
 			result.setToTimeString(sdf.format(new Date(getToTime())));
 		}
+		if (getTiming() != null) {
+			result.setTiming(getTiming());
+		}
 		return result;
 	}
 	

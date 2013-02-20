@@ -32,6 +32,8 @@ public class GenericEvent implements java.io.Serializable {
 	private Long fromTime;
 	private Long toTime;
 	
+	private String timing;
+	
 	private String poiId;
 	private String addressString;
 
@@ -127,4 +129,11 @@ public class GenericEvent implements java.io.Serializable {
 		this.addressString = addressString;
 	}
 
+	public String getTiming() {
+		return timing;
+	}
+
+	public void setTiming(String timing) {
+		this.timing = timing;
+	}
 }

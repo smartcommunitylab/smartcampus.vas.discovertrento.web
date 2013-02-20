@@ -53,6 +53,7 @@ public class BaseDTObject extends BasicObject {
 	private double[] location;
 	private Long fromTime;
 	private Long toTime;
+	private String timing;
 
 	private Map<String,Object> customData;
 	
@@ -178,6 +179,14 @@ public class BaseDTObject extends BasicObject {
 
 	public void setCustomData(Map<String, Object> customData) {
 		this.customData = customData;
+	}
+
+	public String getTiming() {
+		return timing;
+	}
+
+	public void setTiming(String timing) {
+		this.timing = timing;
 	}
 
 	public static void main(String[] args) throws JsonParseException, JsonMappingException, IOException {
