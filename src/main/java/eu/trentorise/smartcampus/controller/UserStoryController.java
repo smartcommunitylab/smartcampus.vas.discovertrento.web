@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import eu.trentorise.smartcampus.dt.model.StoryObject;
-import eu.trentorise.smartcampus.dt.model.POIObject;
 import eu.trentorise.smartcampus.dt.model.UserStoryObject;
 import eu.trentorise.smartcampus.presentation.common.exception.DataException;
 import eu.trentorise.smartcampus.presentation.common.exception.NotFoundException;
@@ -90,10 +89,23 @@ public class UserStoryController extends AbstractObjectController {
 		UserStoryObject obj = Util.convert(objMap, UserStoryObject.class);
 		try {
 			Map<String,Object> parameters = new HashMap<String, Object>();
-			parameters.put("newData", Util.convert(obj.toGenericStory(), Map.class));
-			parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			String operation = null;
+			// TODO IN THIS WAY CAN MODIFY ONLY OWN OBJECTS, OTHERWISE ONLY TAGS IN COMMUNITY DATA
+			if (!getUserId(request).equals(obj.getCreatorId())) {
+				operation = "updateCommunityData";
+				if (obj.getCommunityData() != null) {
+					obj.getCommunityData().setNotes(null);
+					obj.getCommunityData().setRatings(null);
+				}
+				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			} else {
+				operation = "updateStory";
+				parameters.put("newData", Util.convert(obj.toGenericStory(), Map.class)); 
+				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			}
+			
 			domainEngineClient.invokeDomainOperation(
-					"updateStory", 
+					operation, 
 					"eu.trentorise.smartcampus.domain.discovertrento.StoryObject", 
 					obj.getDomainId(),
 					parameters, null, null); 
@@ -113,14 +125,19 @@ public class UserStoryController extends AbstractObjectController {
 	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value="/eu.trentorise.smartcampus.dt.model.UserStoryObject/{id}")
-	public ResponseEntity<UserStoryObject> deleteStory(@PathVariable String id) {
+	public ResponseEntity<UserStoryObject> deleteStory(HttpServletRequest request, @PathVariable String id) {
 
-		StoryObject Story = null;
+		StoryObject story = null;
 		try {
-			Story = storage.getObjectById(id,StoryObject.class);
+			story = storage.getObjectById(id,StoryObject.class);
+			// CAN DELETE ONLY OWN OBJECTS
+			if (!getUserId(request).equals(story)) {
+				logger.error("Attempt to delete not owned object. User "+getUserId(request)+", object "+story.getId());
+				return new ResponseEntity<UserStoryObject>(HttpStatus.METHOD_FAILURE);
+			}
 		} catch (NotFoundException e) {
 			return new ResponseEntity<UserStoryObject>(HttpStatus.OK);
-		} catch (DataException e) {
+		} catch (Exception e) {
 			logger.error("Failed to delete userStory: "+e.getMessage());
 			return new ResponseEntity<UserStoryObject>(HttpStatus.METHOD_FAILURE);
 		}
@@ -131,9 +148,9 @@ public class UserStoryController extends AbstractObjectController {
 			domainEngineClient.invokeDomainOperation(
 					"deleteStory", 
 					"eu.trentorise.smartcampus.domain.discovertrento.StoryObject", 
-					Story.getDomainId(),
+					story.getDomainId(),
 					parameters, null, null); 
-			storage.deleteObject(Story);
+			storage.deleteObject(story);
 		} catch (Exception e) {
 			logger.error("Failed to delete userStory: "+e.getMessage());
 			e.printStackTrace();

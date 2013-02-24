@@ -111,14 +111,26 @@ public class UserPOIController extends AbstractObjectController {
 			e1.printStackTrace();
 			return new ResponseEntity<UserPOIObject>(HttpStatus.METHOD_FAILURE);
 		}
-
 		
 		Map<String,Object> parameters = new HashMap<String, Object>(1);
-		parameters.put("newData", Util.convert(obj.toGenericPOI(), Map.class));
-		parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
 		try {
+			String operation = null;
+			// TODO IN THIS WAY CAN MODIFY ONLY OWN OBJECTS, OTHERWISE ONLY TAGS IN COMMUNITY DATA
+			if (!getUserId(request).equals(obj.getCreatorId())) {
+				operation = "updateCommunityData";
+				if (obj.getCommunityData() != null) {
+					obj.getCommunityData().setNotes(null);
+					obj.getCommunityData().setRatings(null);
+				}
+				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			} else {
+				operation = "updatePOI";
+				parameters.put("newData", Util.convert(obj.toGenericPOI(), Map.class)); 
+				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			}
+			
 			domainEngineClient.invokeDomainOperation(
-					"updatePOI", 
+					operation, 
 					"eu.trentorise.smartcampus.domain.discovertrento.UserPOIObject", 
 					obj.getDomainId(),
 					parameters, null, null); 
@@ -143,9 +155,14 @@ public class UserPOIController extends AbstractObjectController {
 		POIObject poi = null;
 		try {
 			poi = storage.getObjectById(id,POIObject.class);
+			// CAN DELETE ONLY OWN OBJECTS
+			if (!getUserId(request).equals(poi.getCreatorId())) {
+				logger.error("Attempt to delete not owned object. User "+getUserId(request)+", object "+poi.getId());
+				return new ResponseEntity<UserPOIObject>(HttpStatus.METHOD_FAILURE);
+			}
 		} catch (NotFoundException e) {
 			return new ResponseEntity<UserPOIObject>(HttpStatus.OK);
-		} catch (DataException e) {
+		} catch (Exception e) {
 			logger.error("Failed to delete userPOI: "+e.getMessage());
 			return new ResponseEntity<UserPOIObject>(HttpStatus.METHOD_FAILURE);
 		}

@@ -51,6 +51,8 @@ public class ServiceEventController extends AbstractObjectController {
 		Map<String,Object> parameters = new HashMap<String, Object>(1);
 
 		Map<String,Object> customData = new HashMap<String, Object>();
+		// TODO THE FOLLOWING REMOVED TO BLOCK ANY MODIFICATION OF THE SERVICE DATA
+		/*
 		if (obj.getType() != null) {
 			customData.put("type", obj.getType());
 		}
@@ -65,6 +67,12 @@ public class ServiceEventController extends AbstractObjectController {
 		}
 		if (obj.getPoiId() != null) {
 			customData.put("poiId",obj.getPoiId());
+		}
+		*/
+		// TODO the notes cannot be assigned
+		if (obj.getCommunityData() != null) {
+			obj.getCommunityData().setNotes(null);
+			obj.getCommunityData().setRatings(null);
 		}
 		
 		parameters.put("newCustomData", customData);
