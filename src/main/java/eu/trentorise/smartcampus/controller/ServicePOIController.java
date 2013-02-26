@@ -50,9 +50,9 @@ public class ServicePOIController extends AbstractObjectController {
 		
 		Map<String,Object> parameters = new HashMap<String, Object>(1);
 
-		Map<String,Object> customData = new HashMap<String, Object>();
 		// TODO THE FOLLOWING REMOVED TO BLOCK ANY MODIFICATION OF THE SERVICE DATA
 		/*
+		Map<String,Object> customData = new HashMap<String, Object>();
 		if (obj.getType() != null) {
 			customData.put("type", obj.getType());
 		}
@@ -62,11 +62,12 @@ public class ServicePOIController extends AbstractObjectController {
 			obj.getCommunityData().setNotes(null);
 			obj.getCommunityData().setRatings(null);
 		}
-		parameters.put("newCustomData", customData);
+//		parameters.put("newCustomData", customData);
 		parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
 		try {
 			domainEngineClient.invokeDomainOperation(
-					"updateCustomData", 
+//					"updateCustomData", 
+					"updateCommunityData", 
 					"eu.trentorise.smartcampus.domain.discovertrento.ServicePOIObject", 
 					obj.getDomainId(),
 					parameters, null, null); 
