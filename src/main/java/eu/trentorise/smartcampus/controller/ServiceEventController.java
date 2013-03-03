@@ -50,6 +50,8 @@ public class ServiceEventController extends AbstractObjectController {
 		
 		Map<String,Object> parameters = new HashMap<String, Object>(1);
 
+		// TODO THE FOLLOWING REMOVED TO BLOCK ANY MODIFICATION OF THE SERVICE DATA
+		/*
 		Map<String,Object> customData = new HashMap<String, Object>();
 		if (obj.getType() != null) {
 			customData.put("type", obj.getType());
@@ -66,12 +68,19 @@ public class ServiceEventController extends AbstractObjectController {
 		if (obj.getPoiId() != null) {
 			customData.put("poiId",obj.getPoiId());
 		}
+		*/
+		// TODO the notes cannot be assigned
+		if (obj.getCommunityData() != null) {
+			obj.getCommunityData().setNotes(null);
+			obj.getCommunityData().setRatings(null);
+		}
 		
-		parameters.put("newCustomData", customData);
+//		parameters.put("newCustomData", customData);
 		parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
 		try {
 			domainEngineClient.invokeDomainOperation(
-					"updateCustomData", 
+//					"updateCustomData", 
+					"updateCommunityData", 
 					"eu.trentorise.smartcampus.domain.discovertrento.ServiceEventObject", 
 					obj.getDomainId(),
 					parameters, null, null); 

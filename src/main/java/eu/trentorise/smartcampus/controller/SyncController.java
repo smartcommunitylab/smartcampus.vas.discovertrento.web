@@ -16,6 +16,7 @@
 package eu.trentorise.smartcampus.controller;
 
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -53,14 +54,21 @@ public class SyncController extends AbstractObjectController {
 		storage.cleanSyncData(syncReq.getSyncData(), userId);
 
 		return new ResponseEntity<SyncData>(result,HttpStatus.OK);
-		
 	}
 
 	private void filterResult(SyncData result, String userId) {
 		if (result.getUpdated() != null) {
 			List<BasicObject> list = result.getUpdated().get(EventObject.class.getName());
 			if (list != null && !list.isEmpty()) {
-				for (BasicObject event : list) {
+				for (Iterator<BasicObject> iterator = list.iterator(); iterator.hasNext();) {
+					EventObject event = (EventObject) iterator.next();
+					// skip old events where user does not participate
+					if (event.getFromTime() < System.currentTimeMillis()-24*60*60*1000 &&
+						(event.getAttending()==null || !event.getAttending().contains(userId))) 
+					{
+						iterator.remove();
+						continue;
+					}
 					EventObject.filterUserData((EventObject)event, userId);
 				}
 			}

@@ -98,12 +98,25 @@ public class UserEventController extends AbstractObjectController {
 				logger.error("Error creating UserEvent: empty poiId");
 				return new ResponseEntity<UserEventObject>(HttpStatus.METHOD_FAILURE);
 			}
+			
 			Map<String,Object> parameters = new HashMap<String, Object>();
-			POIObject poi = storage.getObjectById(obj.getPoiId(), POIObject.class);
-			parameters.put("newData", Util.convert(obj.toGenericEvent(poi), Map.class));
-			parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			String operation = null;
+			// TODO IN THIS WAY CAN MODIFY ONLY OWN OBJECTS, OTHERWISE ONLY TAGS IN COMMUNITY DATA
+			if (!getUserId(request).equals(obj.getCreatorId())) {
+				operation = "updateCommunityData";
+				if (obj.getCommunityData() != null) {
+					obj.getCommunityData().setNotes(null);
+					obj.getCommunityData().setRatings(null);
+				}
+				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			} else {
+				operation = "updateEvent";
+				POIObject poi = storage.getObjectById(obj.getPoiId(), POIObject.class);
+				parameters.put("newData", Util.convert(obj.toGenericEvent(poi), Map.class)); 
+				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+			}
 			domainEngineClient.invokeDomainOperation(
-					"updateEvent", 
+					operation, 
 					"eu.trentorise.smartcampus.domain.discovertrento.UserEventObject", 
 					obj.getDomainId(),
 					parameters, null, null); 
@@ -123,14 +136,19 @@ public class UserEventController extends AbstractObjectController {
 	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value="/eu.trentorise.smartcampus.dt.model.UserEventObject/{id}")
-	public ResponseEntity<UserEventObject> deleteEvent(@PathVariable String id) {
+	public ResponseEntity<UserEventObject> deleteEvent(HttpServletRequest request, @PathVariable String id) {
 
 		EventObject event = null;
 		try {
 			event = storage.getObjectById(id,EventObject.class);
+			// CAN DELETE ONLY OWN OBJECTS
+			if (!getUserId(request).equals(event.getCreatorId())) {
+				logger.error("Attempt to delete not owned object. User "+getUserId(request)+", object "+event.getId());
+				return new ResponseEntity<UserEventObject>(HttpStatus.METHOD_FAILURE);
+			}
 		} catch (NotFoundException e) {
 			return new ResponseEntity<UserEventObject>(HttpStatus.OK);
-		} catch (DataException e) {
+		} catch (Exception e) {
 			logger.error("Failed to delete userEvent: "+e.getMessage());
 			e.printStackTrace();
 			return new ResponseEntity<UserEventObject>(HttpStatus.METHOD_FAILURE);
