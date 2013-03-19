@@ -15,6 +15,13 @@
  ******************************************************************************/
 package eu.trentorise.smartcampus.controller;
 
+import it.sayservice.platform.client.DomainEngineClient;
+import it.sayservice.platform.client.DomainObject;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
@@ -25,6 +32,7 @@ import eu.trentorise.smartcampus.ac.provider.AcService;
 import eu.trentorise.smartcampus.ac.provider.filters.AcProviderFilter;
 import eu.trentorise.smartcampus.ac.provider.model.User;
 import eu.trentorise.smartcampus.data.GeoTimeObjectSyncStorage;
+import eu.trentorise.smartcampus.dt.model.BaseDTObject;
 
 public class AbstractObjectController {
 
@@ -45,4 +53,18 @@ public class AbstractObjectController {
 		return acService.getUserByToken(token);
 	}
 
+	protected DomainObject upgradeDO(BaseDTObject obj, DomainEngineClient client) throws Exception {
+		if (obj.getDomainId() ==  null) {
+			Map<String,Object> params = new HashMap<String, Object>();
+			params.put("id", obj.getId());
+			List<String> list = client.searchDomainObjects(obj.getDomainType(), params, null);
+			if (list != null && !list.isEmpty()) {
+				DomainObject dobj = new DomainObject(list.get(0));
+				obj.setDomainId(dobj.getId());
+				return dobj;
+			}
+		}
+		return null;
+
+	}
 }

@@ -128,7 +128,15 @@ public class UserPOIController extends AbstractObjectController {
 				parameters.put("newData", Util.convert(obj.toGenericPOI(), Map.class)); 
 				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
 			}
-			
+		
+			if (obj.getDomainId() ==  null) {
+				DomainObject dobj = upgradeDO(obj, domainEngineClient);
+				if (dobj != null) {
+					POIObject newObj = EventProcessorImpl.convertPOIObject(dobj);
+					obj.setEntityId(newObj.getEntityId());
+				}
+			}
+
 			domainEngineClient.invokeDomainOperation(
 					operation, 
 					"eu.trentorise.smartcampus.domain.discovertrento.UserPOIObject", 
@@ -167,13 +175,19 @@ public class UserPOIController extends AbstractObjectController {
 			return new ResponseEntity<UserPOIObject>(HttpStatus.METHOD_FAILURE);
 		}
 		try {
-			domainEngineClient.invokeDomainOperation(
-					"deletePOI", 
-					"eu.trentorise.smartcampus.domain.discovertrento.UserPOIObject", 
-					poi.getDomainId(),
-					new HashMap<String, Object>(0), null, null); 
-			
-			storage.deleteObject(poi);
+			if (poi.getDomainId() == null) {
+				upgradeDO(poi, domainEngineClient);
+			}
+			if (poi.getDomainId() != null) {
+				domainEngineClient.invokeDomainOperation(
+						"deletePOI", 
+						"eu.trentorise.smartcampus.domain.discovertrento.UserPOIObject", 
+						poi.getDomainId(),
+						new HashMap<String, Object>(0), null, null); 
+				
+				storage.deleteObject(poi);
+			}
+
 		} catch (Exception e) {
 			logger.error("Failed to delete userPOI: "+e.getMessage());
 			e.printStackTrace();
