@@ -131,7 +131,7 @@ public class UserStoryController extends AbstractObjectController {
 		try {
 			story = storage.getObjectById(id,StoryObject.class);
 			// CAN DELETE ONLY OWN OBJECTS
-			if (!getUserId(request).equals(story)) {
+			if (!getUserId(request).equals(story.getCreatorId())) {
 				logger.error("Attempt to delete not owned object. User "+getUserId(request)+", object "+story.getId());
 				return new ResponseEntity<UserStoryObject>(HttpStatus.METHOD_FAILURE);
 			}
