@@ -16,6 +16,7 @@
 package eu.trentorise.smartcampus.dt.model;
 
 import java.util.Map;
+import java.util.SortedMap;
 
 public class ObjectFilter {
 
@@ -29,10 +30,13 @@ public class ObjectFilter {
 	private Integer limit;
 	private Integer skip;
 	
+	private String text;
+	
 	private String domainType;
 	private String className;
 
 	private Map<String,Object> criteria = null;
+	private SortedMap<String,Integer> sort = null;
 
 	public ObjectFilter() {
 		super();
@@ -125,4 +129,28 @@ public class ObjectFilter {
 	public void setClassName(String className) {
 		this.className = className;
 	}
+
+	/**
+	 * @return the sort
+	 */
+	public SortedMap<String, Integer> getSort() {
+		return sort;
+	}
+
+	/**
+	 * @param sort the sort to set
+	 */
+	public void setSort(SortedMap<String, Integer> sort) {
+		this.sort = sort;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+	
+	
 }

@@ -160,9 +160,9 @@ public class ObjectController extends AbstractObjectController {
 			List<BaseDTObject> objects = null;
 			
 			if (filterObj.getLimit() != null) {
-				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getLimit(), filterObj.getSkip());
+				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getText(), filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getSort(), filterObj.getLimit(), filterObj.getSkip());
 			} else {
-				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getFromTime(), filterObj.getToTime(), criteria);
+				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getText(), filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getSort());
 			}
 			if (objects != null) {
 				for (BaseDTObject o : objects) {
