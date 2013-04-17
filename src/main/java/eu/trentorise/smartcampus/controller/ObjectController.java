@@ -140,7 +140,9 @@ public class ObjectController extends AbstractObjectController {
 				if (filterObj.getDomainType() != null) {
 					criteria.put("domainType", filterObj.getDomainType());
 				}
-				if (filterObj.getType() != null) criteria.put("type", filterObj.getType());
+				if (filterObj.getTypes() != null && ! filterObj.getTypes().isEmpty()) {
+					criteria.put("type", Collections.singletonMap("$in", filterObj.getTypes()));
+				}
 				if (filterObj.isMyObjects()) criteria.put("attending", userId);
 				if (filterObj.getClassName() != null) {
 					try {
@@ -153,6 +155,9 @@ public class ObjectController extends AbstractObjectController {
 				filterObj = new ObjectFilter();
 				criteria = Collections.emptyMap();
 			}
+
+			if (filterObj.getSkip()==null) filterObj.setSkip(0);
+
 			Circle circle = null;
 			if (filterObj.getCenter() != null && filterObj.getRadius() != null) {
 				circle = new Circle(filterObj.getCenter()[0], filterObj.getCenter()[1],filterObj.getRadius());
@@ -160,9 +165,9 @@ public class ObjectController extends AbstractObjectController {
 			List<BaseDTObject> objects = null;
 			
 			if (filterObj.getLimit() != null) {
-				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getLimit(), filterObj.getSkip());
+				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getText(), filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getSort(), filterObj.getLimit(), filterObj.getSkip());
 			} else {
-				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getFromTime(), filterObj.getToTime(), criteria);
+				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getText(), filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getSort());
 			}
 			if (objects != null) {
 				for (BaseDTObject o : objects) {

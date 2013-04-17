@@ -15,24 +15,31 @@
  ******************************************************************************/
 package eu.trentorise.smartcampus.dt.model;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 public class ObjectFilter {
 
 	private boolean myObjects;
 	private double[] center;
 	private Double radius;
-	private String type;
+	private List<String> types;
+	
 	private Long fromTime;
 	private Long toTime;
 	
 	private Integer limit;
 	private Integer skip;
 	
+	private String text;
+	
 	private String domainType;
 	private String className;
 
 	private Map<String,Object> criteria = null;
+	private SortedMap<String,Integer> sort = null;
 
 	public ObjectFilter() {
 		super();
@@ -54,12 +61,12 @@ public class ObjectFilter {
 		this.radius = radius;
 	}
 
-	public String getType() {
-		return type;
+	public List<String> getTypes() {
+		return types;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public void setTypes(List<String> types) {
+		this.types = types;
 	}
 
 	public Long getFromTime() {
@@ -125,4 +132,44 @@ public class ObjectFilter {
 	public void setClassName(String className) {
 		this.className = className;
 	}
+
+	/**
+	 * @return the sort
+	 */
+	public SortedMap<String, Integer> getSort() {
+		return sort;
+	}
+
+	/**
+	 * @param sort the sort to set
+	 */
+	public void setSort(SortedMap<String, Integer> sort) {
+		this.sort = sort;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public void setText(String text) {
+		this.text = text;
+	}
+
+	/**
+	 * @return the type
+	 */
+	public String getType() {
+		if (types != null && ! types.isEmpty()) return types.get(0); 
+		return null;
+	}
+
+	/**
+	 * @param type the type to set
+	 */
+	public void setType(String type) {
+		if (type != null) {
+			this.types = Collections.singletonList(type);
+		}
+	}
+	
 }

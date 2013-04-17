@@ -15,12 +15,15 @@
  ******************************************************************************/
 package eu.trentorise.smartcampus.data;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.geo.Circle;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Order;
 import org.springframework.data.mongodb.core.query.Query;
 
 import com.mongodb.BasicDBObjectBuilder;
@@ -42,15 +45,14 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 		return GeoTimeSyncObjectBean.class;
 	}
 
-	private <T> Criteria createSearchCriteria(Class<T> cls, Circle circle,
-			Long from, Long to, Map<String, Object> inCriteria) {
+	private static <T> Criteria createSearchCriteria(Class<T> cls, Circle circle,
+			Long from, Long to, Map<String, Object> inCriteria, String text) {
 		Criteria criteria = new Criteria();
 		if (cls != null) {
 			criteria.and("type").is(cls.getCanonicalName());
 		}
 		criteria.and("deleted").is(false);
-		
-		
+
 		if (inCriteria != null) {
 			for (String key : inCriteria.keySet()) {
 				criteria.and("content."+key).is(inCriteria.get(key));
@@ -60,36 +62,45 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 			criteria.and("location").near(circle.getCenter()).maxDistance(circle.getRadius());
 //			criteria.and("location").within(circle);
 		}
+		if (text != null && !text.isEmpty()) {
+			Criteria[] or = new Criteria[3];
+			or[0] = new Criteria("content.title").regex(text.toLowerCase(),"i");
+			or[1] = new Criteria("content.description").regex(text.toLowerCase(),"i");
+			or[2] = new Criteria("content.poi.street").regex(text.toLowerCase(),"i");
+			criteria.orOperator(or);
+		}
+		
 		if (from != null || to != null) {
-			Criteria sub = new Criteria();
 			if (from != null) {
-				sub.and("fromTime").gte(from);
+				criteria.and("fromTime").gte(from);
 			}
 			if (to != null) {
-				sub.and("toTime").lte(to);
+				criteria.and("toTime").lte(to);
 			}
-			criteria.orOperator(sub, new Criteria("fromTime").in(null,0));
 		}
+		
 		return criteria;
 	}
 
-	@SuppressWarnings("unchecked")
+
 	@Override
-	public <T extends BaseDTObject> List<T> searchObjects(Class<T> inCls, Circle circle, Long from, Long to, Map<String, Object> inCriteria) throws DataException {
-		Criteria criteria = createSearchCriteria(inCls, circle, from, to, inCriteria);
-		Class<T> cls = inCls;
-		if (cls == null) cls = (Class<T>)BaseDTObject.class;
-		
-		return find(Query.query(criteria), cls);
+	public <T extends BaseDTObject> List<T> searchObjects(Class<T> inCls, Circle circle, String text, Long from, Long to, Map<String, Object> inCriteria, SortedMap<String,Integer> sort) throws DataException {
+		return searchObjects(inCls, circle, text, from, to, inCriteria, sort, 0, 0);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends BaseDTObject> List<T> searchObjects(Class<T> inCls, Circle circle, Long from, Long to, Map<String, Object> inCriteria, int limit, int skip) throws DataException {
-		Criteria criteria = createSearchCriteria(inCls, circle, from, to, inCriteria);
+	public <T extends BaseDTObject> List<T> searchObjects(Class<T> inCls, Circle circle, String text, Long from, Long to, Map<String, Object> inCriteria, SortedMap<String,Integer> sort, int limit, int skip) throws DataException {
+		Criteria criteria = createSearchCriteria(inCls, circle, from, to, inCriteria, text);
 		Query query = Query.query(criteria);
 		if (limit > 0) query.limit(limit);
 		if (skip > 0) query.skip(skip);
+		if (sort != null && !sort.isEmpty()) {
+			for (String key : sort.keySet()) {
+				Order order = sort.get(key) > 0 ? Order.ASCENDING : Order.DESCENDING;
+				query.sort().on("content."+key, order);
+			}
+		}
 		
 		Class<T> cls = inCls;
 		if (cls == null) cls = (Class<T>)BaseDTObject.class;
@@ -115,6 +126,9 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 		return bean;
 	}
 
-	
+	public static void main(String[] args) {
+		Criteria c = createSearchCriteria(GeoTimeSyncObjectBean.class, null, Long.MAX_VALUE, null, new HashMap<String, Object>(), "text");
+		System.err.println(c.getCriteriaObject());
+	}
 	
 }

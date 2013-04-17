@@ -17,6 +17,7 @@ package eu.trentorise.smartcampus.data;
 
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import org.springframework.data.mongodb.core.geo.Circle;
 
@@ -25,8 +26,8 @@ import eu.trentorise.smartcampus.presentation.common.exception.DataException;
 import eu.trentorise.smartcampus.presentation.storage.sync.BasicObjectSyncStorage;
 
 public interface GeoTimeObjectSyncStorage extends BasicObjectSyncStorage {
-
-	public <T extends BaseDTObject> List<T> searchObjects(Class<T> cls, Circle circle, Long from, Long to, Map<String, Object> criteria) throws DataException; 
-	public <T extends BaseDTObject> List<T> searchObjects(Class<T> cls, Circle circle, Long from, Long to, Map<String, Object> criteria, int limit, int skip) throws DataException; 
+	
+	public <T extends BaseDTObject> List<T> searchObjects(Class<T> cls, Circle circle, String text, Long from, Long to, Map<String, Object> criteria, SortedMap<String,Integer> sort) throws DataException; 
+	public <T extends BaseDTObject> List<T> searchObjects(Class<T> cls, Circle circle, String text, Long from, Long to, Map<String, Object> criteria, SortedMap<String,Integer> sort, int limit, int skip) throws DataException; 
 	
 }

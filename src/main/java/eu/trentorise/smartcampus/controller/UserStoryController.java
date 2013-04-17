@@ -104,6 +104,14 @@ public class UserStoryController extends AbstractObjectController {
 				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
 			}
 			
+			if (obj.getDomainId() ==  null) {
+				DomainObject dobj = upgradeDO(obj, domainEngineClient);
+				if (dobj != null) {
+					StoryObject newObj = EventProcessorImpl.convertStoryObject(dobj, storage);
+					obj.setEntityId(newObj.getEntityId());
+				}
+			}
+
 			domainEngineClient.invokeDomainOperation(
 					operation, 
 					"eu.trentorise.smartcampus.domain.discovertrento.StoryObject", 
@@ -131,7 +139,7 @@ public class UserStoryController extends AbstractObjectController {
 		try {
 			story = storage.getObjectById(id,StoryObject.class);
 			// CAN DELETE ONLY OWN OBJECTS
-			if (!getUserId(request).equals(story)) {
+			if (!getUserId(request).equals(story.getCreatorId())) {
 				logger.error("Attempt to delete not owned object. User "+getUserId(request)+", object "+story.getId());
 				return new ResponseEntity<UserStoryObject>(HttpStatus.METHOD_FAILURE);
 			}
@@ -145,12 +153,17 @@ public class UserStoryController extends AbstractObjectController {
 		
 		Map<String,Object> parameters = new HashMap<String, Object>(0);
 		try {
-			domainEngineClient.invokeDomainOperation(
-					"deleteStory", 
-					"eu.trentorise.smartcampus.domain.discovertrento.StoryObject", 
-					story.getDomainId(),
-					parameters, null, null); 
-			storage.deleteObject(story);
+			if (story.getDomainId() == null) {
+				upgradeDO(story, domainEngineClient);
+			}
+			if (story.getDomainId() != null) {
+				domainEngineClient.invokeDomainOperation(
+						"deleteStory", 
+						"eu.trentorise.smartcampus.domain.discovertrento.StoryObject", 
+						story.getDomainId(),
+						parameters, null, null); 
+				storage.deleteObject(story);
+			}
 		} catch (Exception e) {
 			logger.error("Failed to delete userStory: "+e.getMessage());
 			e.printStackTrace();

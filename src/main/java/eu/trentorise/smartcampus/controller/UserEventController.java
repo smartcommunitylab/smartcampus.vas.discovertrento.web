@@ -115,6 +115,15 @@ public class UserEventController extends AbstractObjectController {
 				parameters.put("newData", Util.convert(obj.toGenericEvent(poi), Map.class)); 
 				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
 			}
+			
+			if (obj.getDomainId() ==  null) {
+				DomainObject dobj = upgradeDO(obj, domainEngineClient);
+				if (dobj != null) {
+					EventObject newObj = EventProcessorImpl.convertEventObject(dobj, storage);
+					obj.setEntityId(newObj.getEntityId());
+				}
+			}
+			
 			domainEngineClient.invokeDomainOperation(
 					operation, 
 					"eu.trentorise.smartcampus.domain.discovertrento.UserEventObject", 
@@ -154,15 +163,20 @@ public class UserEventController extends AbstractObjectController {
 			return new ResponseEntity<UserEventObject>(HttpStatus.METHOD_FAILURE);
 		}
 
-		
-		Map<String,Object> parameters = new HashMap<String, Object>(0);
+
 		try {
-			domainEngineClient.invokeDomainOperation(
-					"deleteEvent", 
-					"eu.trentorise.smartcampus.domain.discovertrento.UserEventObject", 
-					event.getDomainId(),
-					parameters, null, null); 
-			storage.deleteObject(event);
+			if (event.getDomainId() == null) {
+				upgradeDO(event, domainEngineClient);
+			}
+			if (event.getDomainId() != null) {
+				Map<String,Object> parameters = new HashMap<String, Object>(0);
+				domainEngineClient.invokeDomainOperation(
+						"deleteEvent", 
+						"eu.trentorise.smartcampus.domain.discovertrento.UserEventObject", 
+						event.getDomainId(),
+						parameters, null, null); 
+				storage.deleteObject(event);
+			}
 		} catch (Exception e) {
 			logger.error("Failed to delete userEvent: "+e.getMessage());
 			e.printStackTrace();
