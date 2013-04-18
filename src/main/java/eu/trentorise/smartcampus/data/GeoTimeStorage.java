@@ -72,10 +72,10 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 		
 		if (from != null || to != null) {
 			if (from != null) {
-				criteria.and("fromTime").gte(from);
+				criteria.and("toTime").gte(from);
 			}
 			if (to != null) {
-				criteria.and("toTime").lte(to);
+				criteria.and("fromTime").lte(to);
 			}
 		}
 		
