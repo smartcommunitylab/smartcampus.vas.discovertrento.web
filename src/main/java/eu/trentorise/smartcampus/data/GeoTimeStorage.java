@@ -118,7 +118,7 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 		} else {
 			bean.setFromTime(0L);
 		}
-		if (baseObject.getToTime() != null) {
+		if (baseObject.getToTime() != null && baseObject.getToTime() != 0) {
 			bean.setToTime(baseObject.getToTime());
 		} else {
 			bean.setToTime(bean.getFromTime());
