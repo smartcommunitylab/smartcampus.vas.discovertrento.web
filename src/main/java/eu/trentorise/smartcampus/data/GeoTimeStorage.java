@@ -59,8 +59,8 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 			}
 		}
 		if (circle != null) {
-			criteria.and("location").near(circle.getCenter()).maxDistance(circle.getRadius());
-//			criteria.and("location").within(circle);
+//			criteria.and("location").near(circle.getCenter()).maxDistance(circle.getRadius());
+			criteria.and("location").within(circle);
 		}
 		if (text != null && !text.isEmpty()) {
 			Criteria[] or = new Criteria[3];
@@ -78,7 +78,6 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 				criteria.and("fromTime").lte(to);
 			}
 		}
-		
 		return criteria;
 	}
 
