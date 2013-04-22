@@ -16,6 +16,7 @@
 package eu.trentorise.smartcampus.controller;
 
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,12 @@ public class SyncController extends AbstractObjectController {
 	public ResponseEntity<SyncData> synchronize(HttpServletRequest request, @RequestParam long since, @RequestBody Map<String,Object> obj) throws Exception{
 		String userId = getUserId(request);
 		SyncDataRequest syncReq = Util.convertRequest(obj, since);
-		SyncData result = storage.getSyncData(syncReq.getSince(), userId);
+		// temporary workaround for older version: do not sync the mobility data.
+		if (syncReq.getSyncData().getExclude() == null) {
+			syncReq.getSyncData().setExclude(Collections.<String,Object>singletonMap("source", "smartplanner-transitstops"));
+		}
+		
+		SyncData result = storage.getSyncData(syncReq.getSince(), userId, syncReq.getSyncData().getInclude(), syncReq.getSyncData().getExclude());
 		filterResult(result, userId);
 		storage.cleanSyncData(syncReq.getSyncData(), userId);
 
