@@ -15,6 +15,7 @@
  ******************************************************************************/
 package eu.trentorise.smartcampus.data;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -44,36 +45,37 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 		return GeoTimeSyncObjectBean.class;
 	}
 
-	private <T> Criteria createSearchCriteria(Class<T> cls, Circle circle,
+	private static <T> Criteria createSearchCriteria(Class<T> cls, Circle circle,
 			Long from, Long to, Map<String, Object> inCriteria, String text) {
 		Criteria criteria = new Criteria();
 		if (cls != null) {
 			criteria.and("type").is(cls.getCanonicalName());
 		}
 		criteria.and("deleted").is(false);
-		
-		if (text != null && !text.isEmpty()) {
-			criteria.orOperator(new Criteria("content.title").regex(text.toLowerCase(),"i"),new Criteria("content.description").regex(text.toLowerCase(),"i"));
-		}
-		
 		if (inCriteria != null) {
 			for (String key : inCriteria.keySet()) {
 				criteria.and("content."+key).is(inCriteria.get(key));
 			}
 		}
 		if (circle != null) {
-			criteria.and("location").near(circle.getCenter()).maxDistance(circle.getRadius());
-//			criteria.and("location").within(circle);
+//			criteria.and("location").near(circle.getCenter()).maxDistance(circle.getRadius());
+			criteria.and("location").within(circle);
 		}
+		if (text != null && !text.isEmpty()) {
+			Criteria[] or = new Criteria[3];
+			or[0] = new Criteria("content.title").regex(text.toLowerCase(),"i");
+			or[1] = new Criteria("content.description").regex(text.toLowerCase(),"i");
+			or[2] = new Criteria("content.poi.street").regex(text.toLowerCase(),"i");
+			criteria.orOperator(or);
+		}
+		
 		if (from != null || to != null) {
-			Criteria sub = new Criteria();
 			if (from != null) {
-				sub.and("fromTime").gte(from);
+				criteria.and("toTime").gte(from);
 			}
 			if (to != null) {
-				sub.and("toTime").lte(to);
+				criteria.and("fromTime").lte(to);
 			}
-			criteria.orOperator(sub, new Criteria("fromTime").in(null,0));
 		}
 		return criteria;
 	}
@@ -114,7 +116,7 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 		} else {
 			bean.setFromTime(0L);
 		}
-		if (baseObject.getToTime() != null) {
+		if (baseObject.getToTime() != null && baseObject.getToTime() != 0) {
 			bean.setToTime(baseObject.getToTime());
 		} else {
 			bean.setToTime(bean.getFromTime());
@@ -122,6 +124,9 @@ public class GeoTimeStorage extends GenericObjectSyncMongoStorage<GeoTimeSyncObj
 		return bean;
 	}
 
-	
+	public static void main(String[] args) {
+		Criteria c = createSearchCriteria(GeoTimeSyncObjectBean.class, null, Long.MAX_VALUE, null, new HashMap<String, Object>(), "text");
+		System.err.println(c.getCriteriaObject());
+	}
 	
 }
