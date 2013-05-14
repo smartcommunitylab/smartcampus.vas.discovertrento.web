@@ -52,7 +52,6 @@ public class EventProcessorImpl implements DomainUpdateListener {
 	private static final String TYPE_USER_POI = "eu.trentorise.smartcampus.domain.discovertrento.UserPOIObject";
 	private static final String TYPE_STORY = "eu.trentorise.smartcampus.domain.discovertrento.StoryObject";
 	
-	private static final String EVENT_CREATED = "CREATED";
 	private static final String EVENT_UPDATED_VAR = "VAR_UPDATED";
 	private static final String EVENT_DELETED = "DELETED";
 	
@@ -139,9 +138,8 @@ public class EventProcessorImpl implements DomainUpdateListener {
 			DomainObject dObj = readDOFromEvent(event);
 			POIObject eObj = convertPOIObject(dObj);
 
-			POIObject old = null;
 			try {
-				old = storage.getObjectById(eObj.getId(), POIObject.class);
+				storage.getObjectById(eObj.getId(), POIObject.class);
 			} catch (NotFoundException e) {
 				createPOI(event, created);
 				return;
@@ -180,9 +178,8 @@ public class EventProcessorImpl implements DomainUpdateListener {
 			logger.debug("Updating UserEventObject: "+event.getDoId());
 			DomainObject dObj = readDOFromEvent(event);
 			EventObject eObj = convertEventObject(dObj, storage);
-			EventObject oldObj = null;
 			try {
-				oldObj = storage.getObjectById(eObj.getId(), EventObject.class);
+				storage.getObjectById(eObj.getId(), EventObject.class);
 			} catch (NotFoundException e) {
 				createEvent(event, created);
 				return;
@@ -214,9 +211,8 @@ public class EventProcessorImpl implements DomainUpdateListener {
 			logger.debug("Updating UserStoryObject: "+event.getDoId());
 			DomainObject dObj = readDOFromEvent(event);
 			StoryObject eObj = convertStoryObject(dObj, storage);
-			StoryObject oldObj = null;
 			try {
-				oldObj = storage.getObjectById(eObj.getId(), StoryObject.class);
+				storage.getObjectById(eObj.getId(), StoryObject.class);
 			} catch (NotFoundException e) {
 				createStory(event, created);
 				return;
@@ -375,6 +371,10 @@ public class EventProcessorImpl implements DomainUpdateListener {
 		if (data.get("toTime") instanceof Long) eo.setToTime((Long)data.get("toTime"));
 		else if (data.get("toTime") != null) eo.setToTime(Long.parseLong(data.get("toTime").toString()));
 
+		if (eo.getToTime() == null || eo.getToTime() < eo.getFromTime()) {
+			eo.setToTime(eo.getFromTime());
+		}
+		
 		String poiId = (String)data.get("poiId");
 		updateLocation(eo, poiId, storage);
 
@@ -402,6 +402,10 @@ public class EventProcessorImpl implements DomainUpdateListener {
 			if (eo.getToTime() == null && customData.containsKey("toTime")) {
 				if (customData.get("toTime") instanceof Long) eo.setToTime((Long)customData.get("toTime"));
 				else if (customData.get("toTime") != null) eo.setToTime(Long.parseLong(customData.get("toTime").toString()));
+				if (eo.getToTime() == null || eo.getToTime() < eo.getFromTime()) {
+					eo.setToTime(eo.getFromTime());
+				}
+
 				eo.setToTimeUserDefined(true);
 			}
 			if (eo.getLocation() == null && customData.containsKey("poiId")) {
@@ -438,6 +442,7 @@ public class EventProcessorImpl implements DomainUpdateListener {
 		return new DomainObject(e.getPayload());
 	}
 
+	@SuppressWarnings("unchecked")
 	public static StoryObject convertStoryObject(DomainObject dObj, GeoTimeObjectSyncStorage storage) {
 		StoryObject so = new StoryObject();
 		Map<String, Object> data =populateBaseDTData(dObj, so);
