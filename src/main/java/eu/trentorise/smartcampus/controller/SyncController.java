@@ -16,7 +16,9 @@
 package eu.trentorise.smartcampus.controller;
 
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +55,14 @@ public class SyncController extends AbstractObjectController {
 		// temporary workaround for older version: do not sync the mobility data.
 		if (syncReq.getSyncData().getExclude() == null) {
 			syncReq.getSyncData().setExclude(Collections.<String,Object>singletonMap("source", "smartplanner-transitstops"));
+		}
+		
+		// temporary workaround for family trento categories: do not sync 'comune', 'famiglia'
+		if (!"familytrento".equals(request.getHeader("APP_TOKEN"))) {
+			Map<String, Object> exclude = new HashMap<String, Object>(syncReq.getSyncData().getExclude());
+			exclude.put("source", Arrays.asList("smartplanner-transitstops","TrentinoFamiglia"));
+			exclude.put("type", "Comune");
+			syncReq.getSyncData().setExclude(exclude);
 		}
 		
 		SyncData result = storage.getSyncData(syncReq.getSince(), userId, syncReq.getSyncData().getInclude(), syncReq.getSyncData().getExclude());
