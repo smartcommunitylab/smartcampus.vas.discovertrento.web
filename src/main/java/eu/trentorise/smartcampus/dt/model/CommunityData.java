@@ -16,6 +16,7 @@
 package eu.trentorise.smartcampus.dt.model;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,4 +75,36 @@ public class CommunityData implements Serializable {
 	public void setRatings(List<Rating> ratings) {
 		this.ratings = ratings;
 	}
+	
+	public static void filterUserData(CommunityData data, String userId) {
+		if (data == null) return;
+		List<Rating> ratings = data.getRatings();
+		if (ratings != null && !ratings.isEmpty()) {
+			boolean found = false;
+			for (Rating r : ratings) {
+				if (r.getUserId().equals(userId)) {
+					data.setRatings(Collections.singletonList(r));
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				data.setRatings(Collections.<Rating>emptyList());
+			}
+		}
+		if (data.getFollowing() != null && ! data.getFollowing().isEmpty()) {
+			if (data.getFollowing().containsKey(userId)) {
+				data.setFollowing(Collections.singletonMap(userId,data.getFollowing().get(userId)));
+			} else {
+				data.setFollowing(Collections.<String,String>emptyMap());
+			}
+		}
+	}
+
+	public static void filterUserData(List<CommunityData> datas, String userId) {
+		for (CommunityData data : datas) {
+			filterUserData(data, userId);
+		}
+	}
+
 }

@@ -208,5 +208,13 @@ public class BaseDTObject extends BasicObject {
 		System.err.println(list);
 	}
 
+	/**
+	 * @param event
+	 * @param userId
+	 */
+	public void filterUserData(String userId) {
+		CommunityData.filterUserData(communityData, userId);
+	}
+
 
 }

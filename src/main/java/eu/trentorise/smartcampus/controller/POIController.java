@@ -18,6 +18,8 @@ package eu.trentorise.smartcampus.controller;
 
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -25,8 +27,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import eu.trentorise.smartcampus.dt.model.BaseDTObject;
 import eu.trentorise.smartcampus.dt.model.POIObject;
-import eu.trentorise.smartcampus.presentation.common.exception.DataException;
 import eu.trentorise.smartcampus.presentation.common.exception.NotFoundException;
 import eu.trentorise.smartcampus.presentation.data.BasicObject;
 
@@ -34,15 +36,21 @@ import eu.trentorise.smartcampus.presentation.data.BasicObject;
 public class POIController extends AbstractObjectController {
 
 	@RequestMapping(method = RequestMethod.GET, value="/eu.trentorise.smartcampus.dt.model.POIObject")
-	public ResponseEntity<List<POIObject>> getAllPOIObject() throws DataException {
+	public ResponseEntity<List<POIObject>> getAllPOIObject(HttpServletRequest request) throws Exception {
 		List<POIObject> list = storage.getObjectsByType(POIObject.class);
+		String userId = getUserId(request);
+		for (BaseDTObject bo : list) {
+			bo.filterUserData(userId);
+		}
 		return new ResponseEntity<List<POIObject>>(list, HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value="/eu.trentorise.smartcampus.dt.model.POIObject/{id}")
-	public ResponseEntity<BasicObject> getPOIObjectById(@PathVariable String id) throws DataException {
+	public ResponseEntity<BasicObject> getPOIObjectById(HttpServletRequest request, @PathVariable String id) throws Exception {
 		try {
-			return new ResponseEntity<BasicObject>(storage.getObjectById(id, POIObject.class),HttpStatus.OK);
+			POIObject poi = storage.getObjectById(id, POIObject.class);
+			if (poi != null) poi.filterUserData(getUserId(request));
+			return new ResponseEntity<BasicObject>(poi,HttpStatus.OK);
 		} catch (NotFoundException e) {
 			logger.error("POIObject with id "+ id+" does not exist");
 			e.printStackTrace();

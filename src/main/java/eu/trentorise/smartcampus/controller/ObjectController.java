@@ -125,6 +125,7 @@ public class ObjectController extends AbstractObjectController {
 			else if (obj instanceof StoryObject)
 				obj = EventProcessorImpl.convertStoryObject(dObj, storage);
 			storage.storeObject(obj);
+			obj.filterUserData(getUserId(request));
 			return new ResponseEntity<Object>(obj, HttpStatus.OK);
 		} catch (Exception e) {
 			logger.error("Failed to rate object with id " + id + ": "
@@ -139,10 +140,15 @@ public class ObjectController extends AbstractObjectController {
 			@RequestParam String idTopic, @PathVariable String id) {
 		try {
 			BaseDTObject obj = (BaseDTObject) storage.getObjectById(id);
+			String userId = getUserId(request);
+			if (obj != null && obj.getCommunityData() != null && obj.getCommunityData().getFollowing() != null && obj.getCommunityData().getFollowing().containsKey(userId)) {
+				obj.filterUserData(userId);
+				return new ResponseEntity<Object>(obj, HttpStatus.OK);
+			}
 			String operation = "follow";
 			Map<String, Object> parameters = new HashMap<String, Object>();
-			parameters.put("user", getUserId(request));
-			parameters.put("idTopic", idTopic);
+			parameters.put("user", userId);
+			parameters.put("topic", idTopic);
 			domainEngineClient.invokeDomainOperation(operation,
 					obj.getDomainType(), obj.getDomainId(), parameters, null,
 					null);
@@ -156,6 +162,7 @@ public class ObjectController extends AbstractObjectController {
 			else if (obj instanceof StoryObject)
 				obj = EventProcessorImpl.convertStoryObject(dObj, storage);
 			storage.storeObject(obj);
+			obj.filterUserData(userId);
 			return new ResponseEntity<Object>(obj, HttpStatus.OK);
 		} catch (Exception e) {
 			logger.error("Failed to rate object with id " + id + ": "
@@ -192,15 +199,14 @@ public class ObjectController extends AbstractObjectController {
 			DomainObject dObj = new DomainObject(oString);
 			if (obj instanceof EventObject) {
 				obj = EventProcessorImpl.convertEventObject(dObj, storage);
-				EventObject.filterUserData((EventObject) obj, userId);
 			} else if (obj instanceof POIObject) {
 				obj = EventProcessorImpl.convertPOIObject(dObj);
 			} else if (obj instanceof StoryObject) {
 				obj = EventProcessorImpl.convertStoryObject(dObj, storage);
-				StoryObject.filterUserData((StoryObject) obj, userId);
 			}
-
 			storage.storeObject(obj);
+			obj.filterUserData(userId);
+
 			return new ResponseEntity<Object>(obj, HttpStatus.OK);
 		} catch (Exception e) {
 			logger.error("Failed to update object with id " + id + ": "
@@ -280,12 +286,7 @@ public class ObjectController extends AbstractObjectController {
 						protos = new ArrayList<BaseDTObject>();
 						map.put(o.getClass().getCanonicalName(), protos);
 					}
-					if (o instanceof EventObject) {
-						EventObject.filterUserData((EventObject) o, userId);
-					}
-					if (o instanceof StoryObject) {
-						StoryObject.filterUserData((StoryObject) o, userId);
-					}
+					o.filterUserData(userId);
 					protos.add(o);
 				}
 			}

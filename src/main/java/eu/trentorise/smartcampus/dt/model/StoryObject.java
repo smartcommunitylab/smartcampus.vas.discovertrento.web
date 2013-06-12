@@ -56,17 +56,18 @@ public class StoryObject extends BaseDTObject {
 		this.attendees = attendees;
 	}
 
-	public static void filterUserData(StoryObject obj, String userId) {
-		List<String> attending = obj.getAttending();
+	public void filterUserData(String userId) {
+		super.filterUserData(userId);
+
 		if (attending == null || attending.isEmpty()) return;
-		if (attending.contains(userId)) obj.setAttending(Collections.singletonList(userId));
-		else obj.setAttending(Collections.<String>emptyList());
+		if (attending.contains(userId)) setAttending(Collections.singletonList(userId));
+		else setAttending(Collections.<String>emptyList());
 	}
 
-	public static void filterUserData(List<StoryObject> list, String userId) {
-		for (StoryObject story : list) {
-			filterUserData(story, userId);
-		}
-	}
+//	public static void filterUserData(List<StoryObject> list, String userId) {
+//		for (StoryObject story : list) {
+//			filterUserData(story, userId);
+//		}
+//	}
 	
 }

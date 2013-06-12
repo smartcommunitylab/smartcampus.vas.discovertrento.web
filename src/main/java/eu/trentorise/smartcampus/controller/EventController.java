@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import eu.trentorise.smartcampus.dt.model.BaseDTObject;
 import eu.trentorise.smartcampus.dt.model.EventObject;
 import eu.trentorise.smartcampus.presentation.common.exception.NotFoundException;
 import eu.trentorise.smartcampus.presentation.data.BasicObject;
@@ -37,7 +38,10 @@ public class EventController extends AbstractObjectController {
 	@RequestMapping(method = RequestMethod.GET, value="/eu.trentorise.smartcampus.dt.model.EventObject")
 	public ResponseEntity<List<EventObject>> getAllEventObject(HttpServletRequest request) throws Exception {
 		List<EventObject> list = storage.getObjectsByType(EventObject.class);
-		EventObject.filterUserData(list, getUserId(request));
+		String userId = getUserId(request);
+		for (BaseDTObject bo : list) {
+			bo.filterUserData(userId);
+		}
 		return new ResponseEntity<List<EventObject>>(list, HttpStatus.OK);
 	}
 
@@ -45,7 +49,7 @@ public class EventController extends AbstractObjectController {
 	public ResponseEntity<BasicObject> getEventObjectById(HttpServletRequest request, @PathVariable String id) throws Exception {
 		try {
 			EventObject o = storage.getObjectById(id, EventObject.class);
-			EventObject.filterUserData(o, getUserId(request));
+			if (o != null) o.filterUserData(getUserId(request));
 			return new ResponseEntity<BasicObject>(o,HttpStatus.OK);
 		} catch (NotFoundException e) {
 			logger.error("EventObject with id "+ id+" does not exist");

@@ -87,7 +87,7 @@
     </bean>
     
      <bean id="socialService" class="eu.trentorise.smartcampus.socialservice.SocialService">
-        <property name="serviceUrl" value="${socialservice.url}" />
+        <constructor-arg value="${socialservice.url}" />
     </bean>
 
 </beans>

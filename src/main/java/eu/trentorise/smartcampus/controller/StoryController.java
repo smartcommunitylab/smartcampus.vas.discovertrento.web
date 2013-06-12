@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import eu.trentorise.smartcampus.dt.model.BaseDTObject;
 import eu.trentorise.smartcampus.dt.model.StoryObject;
 import eu.trentorise.smartcampus.presentation.common.exception.NotFoundException;
 import eu.trentorise.smartcampus.presentation.data.BasicObject;
@@ -37,7 +38,10 @@ public class StoryController extends AbstractObjectController {
 	@RequestMapping(method = RequestMethod.GET, value="/eu.trentorise.smartcampus.dt.model.StoryObject")
 	public ResponseEntity<List<StoryObject>> getAllStoryObject(HttpServletRequest request) throws Exception {
 		List<StoryObject> list = storage.getObjectsByType(StoryObject.class);
-		StoryObject.filterUserData(list, getUserId(request));
+		String userId = getUserId(request);
+		for (BaseDTObject bo : list) {
+			bo.filterUserData(userId);
+		}
 		return new ResponseEntity<List<StoryObject>>(list, HttpStatus.OK);
 	}
 
@@ -45,7 +49,7 @@ public class StoryController extends AbstractObjectController {
 	public ResponseEntity<BasicObject> getStoryObjectById(HttpServletRequest request, @PathVariable String id) throws Exception {
 		try {
 			StoryObject o = storage.getObjectById(id, StoryObject.class);
-			StoryObject.filterUserData(o, getUserId(request));
+			if (o != null) o.filterUserData(getUserId(request));
 			return new ResponseEntity<BasicObject>(o,HttpStatus.OK);
 		} catch (NotFoundException e) {
 			logger.error("StoryObject with id "+ id+" does not exist");

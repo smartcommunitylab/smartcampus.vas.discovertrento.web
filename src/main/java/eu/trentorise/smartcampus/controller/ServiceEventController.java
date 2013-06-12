@@ -45,7 +45,7 @@ public class ServiceEventController extends AbstractObjectController {
 	private DomainEngineClient domainEngineClient; 
 	
 	@RequestMapping(method = RequestMethod.PUT, value="/eu.trentorise.smartcampus.dt.model.ServiceEventObject/{id}")
-	public ResponseEntity<ServiceEventObject> updateEvent(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
+	public ResponseEntity<EventObject> updateEvent(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
 		ServiceEventObject obj = Util.convert(objMap, ServiceEventObject.class);
 		
 		Map<String,Object> parameters = new HashMap<String, Object>(1);
@@ -89,13 +89,12 @@ public class ServiceEventController extends AbstractObjectController {
 			DomainObject dObj = new DomainObject(oString);
 			EventObject uObj = EventProcessorImpl.convertEventObject(dObj, storage);
 			storage.storeObject(uObj);
-			
+			uObj.filterUserData(getUserId(request));
+			return new ResponseEntity<EventObject>(uObj,HttpStatus.OK);
 		} catch (Exception e) {
 			logger.error("Failed to update ServiceEvent: "+e.getMessage());
 			e.printStackTrace();
-			return new ResponseEntity<ServiceEventObject>(HttpStatus.METHOD_FAILURE);
+			return new ResponseEntity<EventObject>(HttpStatus.METHOD_FAILURE);
 		}
-		
-		return new ResponseEntity<ServiceEventObject>(obj,HttpStatus.OK);
 	}
 }
