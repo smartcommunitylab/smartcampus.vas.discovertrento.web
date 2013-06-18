@@ -29,9 +29,12 @@ public class CommunityData implements Serializable {
 	private List<Concept> tags;
 	private String notes;
 	private int averageRating;
+	private int ratingsCount = 0;
 	private List<Rating> ratings;
 	private Map<String, String> following = new HashMap<String, String>();
-
+	private int followsCount = 0;
+	
+	
 	public CommunityData() {
 		super();
 	}
@@ -42,6 +45,7 @@ public class CommunityData implements Serializable {
 
 	public void setFollowing(Map<String, String> following) {
 		this.following = following;
+		setFollowsCount(following == null? 0 : following.size());
 	}
 
 	public List<Concept> getTags() {
@@ -74,6 +78,7 @@ public class CommunityData implements Serializable {
 
 	public void setRatings(List<Rating> ratings) {
 		this.ratings = ratings;
+		setRatingsCount(ratings == null? 0 : ratings.size());
 	}
 	
 	public static void filterUserData(CommunityData data, String userId) {
@@ -91,6 +96,7 @@ public class CommunityData implements Serializable {
 			if (!found) {
 				data.setRatings(Collections.<Rating>emptyList());
 			}
+			data.setRatingsCount(ratings.size());
 		}
 		if (data.getFollowing() != null && ! data.getFollowing().isEmpty()) {
 			if (data.getFollowing().containsKey(userId)) {
@@ -98,6 +104,7 @@ public class CommunityData implements Serializable {
 			} else {
 				data.setFollowing(Collections.<String,String>emptyMap());
 			}
+			data.setFollowsCount(data.getFollowing().size());
 		}
 	}
 
@@ -107,4 +114,19 @@ public class CommunityData implements Serializable {
 		}
 	}
 
+	public int getRatingsCount() {
+		return ratingsCount;
+	}
+
+	public void setRatingsCount(int ratingsCount) {
+		this.ratingsCount = ratingsCount;
+	}
+
+	public int getFollowsCount() {
+		return followsCount;
+	}
+
+	public void setFollowsCount(int followCount) {
+		this.followsCount = followCount;
+	}
 }
