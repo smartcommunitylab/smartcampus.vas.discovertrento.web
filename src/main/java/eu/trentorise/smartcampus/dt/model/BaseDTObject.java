@@ -24,6 +24,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
+import eu.trentorise.smartcampus.presentation.common.util.Util;
 import eu.trentorise.smartcampus.presentation.data.BasicObject;
 
 public class BaseDTObject extends BasicObject {
@@ -216,5 +217,8 @@ public class BaseDTObject extends BasicObject {
 		CommunityData.filterUserData(communityData, userId);
 	}
 
+	public DomainCommunityData getDomainCommunityData() {
+		return Util.convert(communityData, DomainCommunityData.class);
+	}
 
 }

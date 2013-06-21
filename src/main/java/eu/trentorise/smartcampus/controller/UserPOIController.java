@@ -72,7 +72,7 @@ public class UserPOIController extends AbstractObjectController {
 			Map<String,Object> parameters = new HashMap<String, Object>();
 			parameters.put("creator", getUserId(request));
 			parameters.put("data", Util.convert(obj.toGenericPOI(), Map.class));
-			parameters.put("communityData",  Util.convert(obj.getCommunityData(), Map.class));
+			parameters.put("communityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			domainEngineClient.invokeDomainOperation(
 					"createPOI", 
 					"eu.trentorise.smartcampus.domain.discovertrento.UserPOIFactory", 
@@ -123,11 +123,11 @@ public class UserPOIController extends AbstractObjectController {
 					obj.getCommunityData().setNotes(null);
 					obj.getCommunityData().setRatings(null);
 				}
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			} else {
 				operation = "updatePOI";
 				parameters.put("newData", Util.convert(obj.toGenericPOI(), Map.class)); 
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			}
 		
 			if (obj.getDomainId() ==  null) {

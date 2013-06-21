@@ -76,7 +76,7 @@ public class ServiceEventController extends AbstractObjectController {
 		}
 		
 //		parameters.put("newCustomData", customData);
-		parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+		parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 		try {
 			domainEngineClient.invokeDomainOperation(
 //					"updateCustomData", 

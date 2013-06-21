@@ -63,7 +63,7 @@ public class UserStoryController extends AbstractObjectController {
 			
 			parameters.put("creator", getUserId(request));
 			parameters.put("data", Util.convert(obj.toGenericStory(), Map.class));
-			parameters.put("communityData",  Util.convert(obj.getCommunityData(), Map.class));
+			parameters.put("communityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			domainEngineClient.invokeDomainOperation(
 					"createStory", 
 					"eu.trentorise.smartcampus.domain.discovertrento.StoryFactory", 
@@ -97,11 +97,11 @@ public class UserStoryController extends AbstractObjectController {
 					obj.getCommunityData().setNotes(null);
 					obj.getCommunityData().setRatings(null);
 				}
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			} else {
 				operation = "updateStory";
 				parameters.put("newData", Util.convert(obj.toGenericStory(), Map.class)); 
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			}
 			
 			if (obj.getDomainId() ==  null) {

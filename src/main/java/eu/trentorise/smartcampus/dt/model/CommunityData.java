@@ -15,69 +15,27 @@
  ******************************************************************************/
 package eu.trentorise.smartcampus.dt.model;
 
-import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import eu.trentorise.smartcampus.common.Concept;
-
-public class CommunityData implements Serializable {
+public class CommunityData extends DomainCommunityData {
 	private static final long serialVersionUID = 5926048335916274968L;
 
-	private List<Concept> tags;
-	private String notes;
-	private int averageRating;
 	private int ratingsCount = 0;
-	private List<Rating> ratings;
-	private Map<String, String> following = new HashMap<String, String>();
 	private int followsCount = 0;
-	
-	
+
 	public CommunityData() {
 		super();
 	}
 
-	public Map<String, String> getFollowing() {
-		return following;
-	}
-
 	public void setFollowing(Map<String, String> following) {
-		this.following = following;
+		super.setFollowing(following);
 		setFollowsCount(following == null? 0 : following.size());
 	}
 
-	public List<Concept> getTags() {
-		return tags;
-	}
-
-	public void setTags(List<Concept> tags) {
-		this.tags = tags;
-	}
-
-	public String getNotes() {
-		return notes;
-	}
-
-	public void setNotes(String notes) {
-		this.notes = notes;
-	}
-
-	public int getAverageRating() {
-		return averageRating;
-	}
-
-	public void setAverageRating(int averageRating) {
-		this.averageRating = averageRating;
-	}
-
-	public List<Rating> getRatings() {
-		return ratings;
-	}
-
 	public void setRatings(List<Rating> ratings) {
-		this.ratings = ratings;
+		super.setRatings(ratings);
 		setRatingsCount(ratings == null? 0 : ratings.size());
 	}
 	

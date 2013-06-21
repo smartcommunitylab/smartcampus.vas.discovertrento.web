@@ -70,7 +70,7 @@ public class UserEventController extends AbstractObjectController {
 			}
 			POIObject poi = storage.getObjectById(obj.getPoiId(), POIObject.class);
 			parameters.put("data", Util.convert(obj.toGenericEvent(poi), Map.class));
-			parameters.put("communityData",  Util.convert(obj.getCommunityData(), Map.class));
+			parameters.put("communityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			domainEngineClient.invokeDomainOperation(
 					"createEvent", 
 					"eu.trentorise.smartcampus.domain.discovertrento.UserEventFactory", 
@@ -109,12 +109,12 @@ public class UserEventController extends AbstractObjectController {
 					obj.getCommunityData().setNotes(null);
 					obj.getCommunityData().setRatings(null);
 				}
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			} else {
 				operation = "updateEvent";
 				POIObject poi = storage.getObjectById(obj.getPoiId(), POIObject.class);
 				parameters.put("newData", Util.convert(obj.toGenericEvent(poi), Map.class)); 
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			}
 			
 			if (obj.getDomainId() ==  null) {
