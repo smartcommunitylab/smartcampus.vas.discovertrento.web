@@ -63,7 +63,7 @@ public class UserStoryController extends AbstractObjectController {
 			
 			parameters.put("creator", getUserId(request));
 			parameters.put("data", Util.convert(obj.toGenericStory(), Map.class));
-			parameters.put("communityData",  Util.convert(obj.getCommunityData(), Map.class));
+			parameters.put("communityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			domainEngineClient.invokeDomainOperation(
 					"createStory", 
 					"eu.trentorise.smartcampus.domain.discovertrento.StoryFactory", 
@@ -85,7 +85,7 @@ public class UserStoryController extends AbstractObjectController {
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, value="/eu.trentorise.smartcampus.dt.model.UserStoryObject/{id}")
-	public ResponseEntity<UserStoryObject> updateStory(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
+	public ResponseEntity<StoryObject> updateStory(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
 		UserStoryObject obj = Util.convert(objMap, UserStoryObject.class);
 		try {
 			Map<String,Object> parameters = new HashMap<String, Object>();
@@ -97,11 +97,11 @@ public class UserStoryController extends AbstractObjectController {
 					obj.getCommunityData().setNotes(null);
 					obj.getCommunityData().setRatings(null);
 				}
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			} else {
 				operation = "updateStory";
 				parameters.put("newData", Util.convert(obj.toGenericStory(), Map.class)); 
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			}
 			
 			if (obj.getDomainId() ==  null) {
@@ -122,14 +122,16 @@ public class UserStoryController extends AbstractObjectController {
 			DomainObject dObj = new DomainObject(oString);
 			StoryObject uObj = EventProcessorImpl.convertStoryObject(dObj, storage);
 			storage.storeObject(uObj);
+			
+			uObj.filterUserData(getUserId(request));
+			return new ResponseEntity<StoryObject>(uObj,HttpStatus.OK);
 
 		} catch (Exception e) {
 			logger.error("Failed to update userStory: "+e.getMessage());
 			e.printStackTrace();
-			return new ResponseEntity<UserStoryObject>(HttpStatus.METHOD_FAILURE);
+			return new ResponseEntity<StoryObject>(HttpStatus.METHOD_FAILURE);
 		}
 		
-		return new ResponseEntity<UserStoryObject>(obj,HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value="/eu.trentorise.smartcampus.dt.model.UserStoryObject/{id}")
@@ -178,7 +180,10 @@ public class UserStoryController extends AbstractObjectController {
 		Map<String,Object> criteria = new HashMap<String, Object>();
 		criteria.put("domainType", "eu.trentorise.smartcampus.domain.discovertrento.StoryObject");
 		List<StoryObject> list = storage.searchObjects(StoryObject.class, criteria);
-		StoryObject.filterUserData(list, getUserId(request));
+		String userId = getUserId(request);
+		for (StoryObject so : list) {
+			so.filterUserData(userId);
+		}
 		return new ResponseEntity<List<StoryObject>>(list, HttpStatus.OK);
 	}
 
@@ -186,7 +191,7 @@ public class UserStoryController extends AbstractObjectController {
 	public ResponseEntity<BasicObject> getStoryObjectById(HttpServletRequest request, @PathVariable String id) throws Exception {
 		try {
 			StoryObject e = storage.getObjectById(id, StoryObject.class);
-			StoryObject.filterUserData(e, getUserId(request));
+			if (e != null) e.filterUserData(getUserId(request));
 			return new ResponseEntity<BasicObject>(e,HttpStatus.OK);
 		} catch (NotFoundException e) {
 			logger.error("UserStoryObject with id "+ id+" does not exist");

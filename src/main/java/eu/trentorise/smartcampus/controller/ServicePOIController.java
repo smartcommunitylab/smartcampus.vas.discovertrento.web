@@ -45,7 +45,7 @@ public class ServicePOIController extends AbstractObjectController {
 	private DomainEngineClient domainEngineClient; 
 	
 	@RequestMapping(method = RequestMethod.PUT, value="/eu.trentorise.smartcampus.dt.model.ServicePOIObject/{id}")
-	public ResponseEntity<ServicePOIObject> updatePOI(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
+	public ResponseEntity<POIObject> updatePOI(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
 		ServicePOIObject obj = Util.convert(objMap, ServicePOIObject.class);
 		
 		Map<String,Object> parameters = new HashMap<String, Object>(1);
@@ -63,7 +63,7 @@ public class ServicePOIController extends AbstractObjectController {
 			obj.getCommunityData().setRatings(null);
 		}
 //		parameters.put("newCustomData", customData);
-		parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+		parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 		try {
 			domainEngineClient.invokeDomainOperation(
 //					"updateCustomData", 
@@ -76,14 +76,13 @@ public class ServicePOIController extends AbstractObjectController {
 			DomainObject dObj = new DomainObject(oString);
 			POIObject uObj = EventProcessorImpl.convertPOIObject(dObj);
 			storage.storeObject(uObj);
-
+			uObj.filterUserData(getUserId(request));
+			return new ResponseEntity<POIObject>(uObj,HttpStatus.OK);
 			
 		} catch (Exception e) {
 			logger.error("Failed to update ServicePOI: "+e.getMessage());
 			e.printStackTrace();
-			return new ResponseEntity<ServicePOIObject>(HttpStatus.METHOD_FAILURE);
+			return new ResponseEntity<POIObject>(HttpStatus.METHOD_FAILURE);
 		}
-		
-		return new ResponseEntity<ServicePOIObject>(obj,HttpStatus.OK);
 	}
 }

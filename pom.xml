@@ -32,7 +32,12 @@
             <version>1.2</version>
             <type>jar</type>
             <scope>compile</scope>
-        </dependency> 		
+        </dependency>
+        <dependency>
+        	<groupId>eu.trentorise.smartcampus</groupId>
+        	<artifactId>socialservice.client</artifactId>
+        	<version>1.0</version>
+        </dependency>
 	</dependencies>
 
     <build>

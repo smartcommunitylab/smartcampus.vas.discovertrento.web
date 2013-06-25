@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import eu.trentorise.smartcampus.dt.model.BaseDTObject;
 import eu.trentorise.smartcampus.dt.model.POIObject;
 import eu.trentorise.smartcampus.dt.model.UserPOIObject;
 import eu.trentorise.smartcampus.presentation.common.exception.DataException;
@@ -71,7 +72,7 @@ public class UserPOIController extends AbstractObjectController {
 			Map<String,Object> parameters = new HashMap<String, Object>();
 			parameters.put("creator", getUserId(request));
 			parameters.put("data", Util.convert(obj.toGenericPOI(), Map.class));
-			parameters.put("communityData",  Util.convert(obj.getCommunityData(), Map.class));
+			parameters.put("communityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			domainEngineClient.invokeDomainOperation(
 					"createPOI", 
 					"eu.trentorise.smartcampus.domain.discovertrento.UserPOIFactory", 
@@ -102,14 +103,14 @@ public class UserPOIController extends AbstractObjectController {
 	}
 
 	@RequestMapping(method = RequestMethod.PUT, value="/eu.trentorise.smartcampus.dt.model.UserPOIObject/{id}")
-	public ResponseEntity<UserPOIObject> updatePOI(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
+	public ResponseEntity<POIObject> updatePOI(HttpServletRequest request, @RequestBody Map<String,Object> objMap, @PathVariable String id) {
 		UserPOIObject obj = Util.convert(objMap, UserPOIObject.class);
 		try {
 			validatePOI(obj);
 		} catch (DataException e1) {
 			logger.error("Failed to create userPOI: "+e1.getMessage());
 			e1.printStackTrace();
-			return new ResponseEntity<UserPOIObject>(HttpStatus.METHOD_FAILURE);
+			return new ResponseEntity<POIObject>(HttpStatus.METHOD_FAILURE);
 		}
 		
 		Map<String,Object> parameters = new HashMap<String, Object>(1);
@@ -122,11 +123,11 @@ public class UserPOIController extends AbstractObjectController {
 					obj.getCommunityData().setNotes(null);
 					obj.getCommunityData().setRatings(null);
 				}
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			} else {
 				operation = "updatePOI";
 				parameters.put("newData", Util.convert(obj.toGenericPOI(), Map.class)); 
-				parameters.put("newCommunityData",  Util.convert(obj.getCommunityData(), Map.class));
+				parameters.put("newCommunityData",  Util.convert(obj.getDomainCommunityData(), Map.class));
 			}
 		
 			if (obj.getDomainId() ==  null) {
@@ -147,14 +148,16 @@ public class UserPOIController extends AbstractObjectController {
 			DomainObject dObj = new DomainObject(oString);
 			POIObject uObj = EventProcessorImpl.convertPOIObject(dObj);
 			storage.storeObject(uObj);
+			
+			uObj.filterUserData(getUserId(request));
+			
+			return new ResponseEntity<POIObject>(uObj,HttpStatus.OK);
 
 		} catch (Exception e) {
 			logger.error("Failed to update userPOI: "+e.getMessage());
 			e.printStackTrace();
-			return new ResponseEntity<UserPOIObject>(HttpStatus.METHOD_FAILURE);
+			return new ResponseEntity<POIObject>(HttpStatus.METHOD_FAILURE);
 		}
-		
-		return new ResponseEntity<UserPOIObject>(obj,HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value="/eu.trentorise.smartcampus.dt.model.UserPOIObject/{id}")
@@ -198,17 +201,23 @@ public class UserPOIController extends AbstractObjectController {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value="/eu.trentorise.smartcampus.dt.model.UserPOIObject")
-	public ResponseEntity<List<POIObject>> getAllPOIObject() throws DataException {
+	public ResponseEntity<List<POIObject>> getAllPOIObject(HttpServletRequest request) throws Exception {
 		Map<String,Object> criteria = new HashMap<String, Object>();
 		criteria.put("domainType", "eu.trentorise.smartcampus.domain.discovertrento.UserPOIObject");
 		List<POIObject> list = storage.searchObjects(POIObject.class, criteria);
+		String userId = getUserId(request);
+		for (BaseDTObject bo : list) {
+			bo.filterUserData(userId);
+		}
 		return new ResponseEntity<List<POIObject>>(list, HttpStatus.OK);
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value="/eu.trentorise.smartcampus.dt.model.UserPOIObject/{id}")
-	public ResponseEntity<BasicObject> getPOIObjectById(@PathVariable String id) throws DataException {
+	public ResponseEntity<BasicObject> getPOIObjectById(HttpServletRequest request, @PathVariable String id) throws Exception {
 		try {
-			return new ResponseEntity<BasicObject>(storage.getObjectById(id, POIObject.class),HttpStatus.OK);
+			POIObject obj = storage.getObjectById(id, POIObject.class);
+			if (obj != null) obj.filterUserData(getUserId(request));
+			return new ResponseEntity<BasicObject>(obj,HttpStatus.OK);
 		} catch (NotFoundException e) {
 			logger.error("UserPOIObject with id "+ id+" does not exist");
 			return new ResponseEntity<BasicObject>(HttpStatus.METHOD_FAILURE);

@@ -85,5 +85,9 @@
     <bean id="acClient" class="eu.trentorise.smartcampus.ac.provider.filters.AcClient">
         <property name="endpointUrl" value="${ac.endpoint.url}" />
     </bean>
+    
+     <bean id="socialService" class="eu.trentorise.smartcampus.socialservice.SocialService">
+        <constructor-arg value="${socialservice.url}" />
+    </bean>
 
 </beans>

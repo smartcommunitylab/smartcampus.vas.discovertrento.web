@@ -84,17 +84,18 @@ public class EventObject extends BaseDTObject {
 		this.poiIdUserDefined = poiIdUserDefined;
 	}
 	
-	public static void filterUserData(EventObject event, String userId) {
-		List<String> attending = event.getAttending();
+	public void filterUserData(String userId) {
+		super.filterUserData(userId);
+
 		if (attending == null || attending.isEmpty()) return;
-		if (attending.contains(userId)) event.setAttending(Collections.singletonList(userId));
-		else event.setAttending(Collections.<String>emptyList());
+		if (attending.contains(userId)) setAttending(Collections.singletonList(userId));
+		else setAttending(Collections.<String>emptyList());
 	}
 
-	public static void filterUserData(List<EventObject> events, String userId) {
-		for (EventObject event : events) {
-			filterUserData(event, userId);
-		}
-	}
+//	public static void filterUserData(List<EventObject> events, String userId) {
+//		for (EventObject event : events) {
+//			filterUserData(event, userId);
+//		}
+//	}
 
 }

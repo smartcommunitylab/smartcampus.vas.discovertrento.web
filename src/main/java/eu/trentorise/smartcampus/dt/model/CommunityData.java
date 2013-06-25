@@ -15,52 +15,76 @@
  ******************************************************************************/
 package eu.trentorise.smartcampus.dt.model;
 
-import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import eu.trentorise.smartcampus.common.Concept;
-
-public class CommunityData implements Serializable{ 
+public class CommunityData extends DomainCommunityData {
 	private static final long serialVersionUID = 5926048335916274968L;
 
-	private List<Concept> tags;
-	private String notes;
-	private int averageRating;
-	private List<Rating> ratings;
-	
+	private int ratingsCount = 0;
+	private int followsCount = 0;
+
 	public CommunityData() {
 		super();
 	}
 
-	public List<Concept> getTags() {
-		return tags;
-	}
-
-	public void setTags(List<Concept> tags) {
-		this.tags = tags;
-	}
-
-	public String getNotes() {
-		return notes;
-	}
-
-	public void setNotes(String notes) {
-		this.notes = notes;
-	}
-
-	public int getAverageRating() {
-		return averageRating;
-	}
-
-	public void setAverageRating(int averageRating) {
-		this.averageRating = averageRating;
-	}
-
-	public List<Rating> getRatings() {
-		return ratings;
+	public void setFollowing(Map<String, String> following) {
+		super.setFollowing(following);
+		setFollowsCount(following == null? 0 : following.size());
 	}
 
 	public void setRatings(List<Rating> ratings) {
-		this.ratings = ratings;
+		super.setRatings(ratings);
+		setRatingsCount(ratings == null? 0 : ratings.size());
+	}
+	
+	public static void filterUserData(CommunityData data, String userId) {
+		if (data == null) return;
+		List<Rating> ratings = data.getRatings();
+		if (ratings != null && !ratings.isEmpty()) {
+			boolean found = false;
+			for (Rating r : ratings) {
+				if (r.getUserId().equals(userId)) {
+					data.setRatings(Collections.singletonList(r));
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				data.setRatings(Collections.<Rating>emptyList());
+			}
+			data.setRatingsCount(ratings.size());
+		}
+		if (data.getFollowing() != null && ! data.getFollowing().isEmpty()) {
+			if (data.getFollowing().containsKey(userId)) {
+				data.setFollowing(Collections.singletonMap(userId,data.getFollowing().get(userId)));
+			} else {
+				data.setFollowing(Collections.<String,String>emptyMap());
+			}
+			data.setFollowsCount(data.getFollowing().size());
+		}
+	}
+
+	public static void filterUserData(List<CommunityData> datas, String userId) {
+		for (CommunityData data : datas) {
+			filterUserData(data, userId);
+		}
+	}
+
+	public int getRatingsCount() {
+		return ratingsCount;
+	}
+
+	public void setRatingsCount(int ratingsCount) {
+		this.ratingsCount = ratingsCount;
+	}
+
+	public int getFollowsCount() {
+		return followsCount;
+	}
+
+	public void setFollowsCount(int followCount) {
+		this.followsCount = followCount;
 	}
 }

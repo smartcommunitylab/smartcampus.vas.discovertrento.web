@@ -15,7 +15,6 @@
  ******************************************************************************/
 package eu.trentorise.smartcampus.controller;
 
-
 import it.sayservice.platform.client.DomainEngineClient;
 import it.sayservice.platform.client.DomainObject;
 import it.sayservice.platform.core.common.util.ServiceUtil;
@@ -49,27 +48,37 @@ import eu.trentorise.smartcampus.dt.model.SimpleDTObject;
 import eu.trentorise.smartcampus.dt.model.StoryObject;
 import eu.trentorise.smartcampus.presentation.common.exception.NotFoundException;
 import eu.trentorise.smartcampus.processor.EventProcessorImpl;
+import eu.trentorise.smartcampus.socialservice.SocialService;
 
 @Controller
 public class ObjectController extends AbstractObjectController {
 
 	private static final String SEARCH_FILTER_PARAM = "filter";
-	
+
 	@Autowired
-	private DomainEngineClient domainEngineClient; 
+	private DomainEngineClient domainEngineClient;
 
-//	@Autowired
-//	private SemanticClient semanticClient; 
+	@Autowired
+	private SocialService socialService;
 
-	@RequestMapping(value="/objects/{id}/rate", method = RequestMethod.PUT)
-	public ResponseEntity<Object> rate(HttpServletRequest request, @RequestParam String rating, @PathVariable String id) {
+	// @Autowired
+	// private SemanticClient semanticClient;
+
+	@RequestMapping(value = "/objects/{id}/rate", method = RequestMethod.PUT)
+	public ResponseEntity<Object> rate(HttpServletRequest request,
+			@RequestParam String rating, @PathVariable String id) {
 		try {
-			BaseDTObject obj = (BaseDTObject)storage.getObjectById(id);
-			Map<String,Object> parameters = new HashMap<String, Object>();
+			BaseDTObject obj = (BaseDTObject) storage.getObjectById(id);
+			Map<String, Object> parameters = new HashMap<String, Object>();
 			parameters.put("user", getUserId(request));
 			parameters.put("rating", rating);
-			Object o = ServiceUtil.deserializeObject((byte[])domainEngineClient.invokeDomainOperationSync("rate", obj.getDomainType(), obj.getDomainId(), parameters, null));
-			String oString = domainEngineClient.searchDomainObject(obj.getDomainType(), obj.getDomainId(), null);
+			Object o = ServiceUtil
+					.deserializeObject((byte[]) domainEngineClient
+							.invokeDomainOperationSync("rate",
+									obj.getDomainType(), obj.getDomainId(),
+									parameters, null));
+			String oString = domainEngineClient.searchDomainObject(
+					obj.getDomainType(), obj.getDomainId(), null);
 			DomainObject dObj = new DomainObject(oString);
 			if (obj instanceof EventObject)
 				obj = EventProcessorImpl.convertEventObject(dObj, storage);
@@ -80,75 +89,168 @@ public class ObjectController extends AbstractObjectController {
 			storage.storeObject(obj);
 			return new ResponseEntity<Object>(o, HttpStatus.OK);
 		} catch (Exception e) {
-			logger.error("Failed to rate object with id " +id+": "+e.getMessage());
+			logger.error("Failed to rate object with id " + id + ": "
+					+ e.getMessage());
 			e.printStackTrace();
 			return new ResponseEntity<Object>(HttpStatus.METHOD_FAILURE);
 		}
 	}
 
-	@RequestMapping(value="/objects/{id}/attend", method = RequestMethod.PUT)
-	public ResponseEntity<Object> attend(HttpServletRequest request,  @PathVariable String id) {
+	@RequestMapping(value = "/objects/{id}/unfollow", method = RequestMethod.PUT)
+	public ResponseEntity<Object> unfollow(HttpServletRequest request,
+			@PathVariable String id) {
+		try {
+			BaseDTObject obj = (BaseDTObject) storage.getObjectById(id);
+			String operation = "unfollow";
+			String user = getUserId(request);
+			String topicId = obj.getCommunityData().getFollowing().get(user);
+
+			// remove topic from community-manager
+			if (topicId != null) {
+				socialService.deleteTopic(retrieveUser(request).getAuthToken(),
+						topicId);
+			}
+			Map<String, Object> parameters = new HashMap<String, Object>();
+			parameters.put("user", user);
+			domainEngineClient.invokeDomainOperation(operation,
+					obj.getDomainType(), obj.getDomainId(), parameters, null,
+					null);
+			String oString = domainEngineClient.searchDomainObject(
+					obj.getDomainType(), obj.getDomainId(), null);
+			DomainObject dObj = new DomainObject(oString);
+			if (obj instanceof EventObject)
+				obj = EventProcessorImpl.convertEventObject(dObj, storage);
+			else if (obj instanceof POIObject)
+				obj = EventProcessorImpl.convertPOIObject(dObj);
+			else if (obj instanceof StoryObject)
+				obj = EventProcessorImpl.convertStoryObject(dObj, storage);
+			storage.storeObject(obj);
+			obj.filterUserData(getUserId(request));
+			return new ResponseEntity<Object>(obj, HttpStatus.OK);
+		} catch (Exception e) {
+			logger.error("Failed to rate object with id " + id + ": "
+					+ e.getMessage());
+			e.printStackTrace();
+			return new ResponseEntity<Object>(HttpStatus.METHOD_FAILURE);
+		}
+	}
+
+	@RequestMapping(value = "/objects/{id}/follow", method = RequestMethod.PUT)
+	public ResponseEntity<Object> follow(HttpServletRequest request,
+			@RequestParam String idTopic, @PathVariable String id) {
+		try {
+			BaseDTObject obj = (BaseDTObject) storage.getObjectById(id);
+			String userId = getUserId(request);
+			if (obj != null && obj.getCommunityData() != null && obj.getCommunityData().getFollowing() != null && obj.getCommunityData().getFollowing().containsKey(userId)) {
+				obj.filterUserData(userId);
+				return new ResponseEntity<Object>(obj, HttpStatus.OK);
+			}
+			String operation = "follow";
+			Map<String, Object> parameters = new HashMap<String, Object>();
+			parameters.put("user", userId);
+			parameters.put("topic", idTopic);
+			domainEngineClient.invokeDomainOperation(operation,
+					obj.getDomainType(), obj.getDomainId(), parameters, null,
+					null);
+			String oString = domainEngineClient.searchDomainObject(
+					obj.getDomainType(), obj.getDomainId(), null);
+			DomainObject dObj = new DomainObject(oString);
+			if (obj instanceof EventObject)
+				obj = EventProcessorImpl.convertEventObject(dObj, storage);
+			else if (obj instanceof POIObject)
+				obj = EventProcessorImpl.convertPOIObject(dObj);
+			else if (obj instanceof StoryObject)
+				obj = EventProcessorImpl.convertStoryObject(dObj, storage);
+			storage.storeObject(obj);
+			obj.filterUserData(userId);
+			return new ResponseEntity<Object>(obj, HttpStatus.OK);
+		} catch (Exception e) {
+			logger.error("Failed to rate object with id " + id + ": "
+					+ e.getMessage());
+			e.printStackTrace();
+			return new ResponseEntity<Object>(HttpStatus.METHOD_FAILURE);
+		}
+	}
+
+	@RequestMapping(value = "/objects/{id}/attend", method = RequestMethod.PUT)
+	public ResponseEntity<Object> attend(HttpServletRequest request,
+			@PathVariable String id) {
 		return performDomainOperation(request, id, "attend");
 	}
 
-	@RequestMapping(value="/objects/{id}/notAttend", method = RequestMethod.PUT)
-	public ResponseEntity<Object> notAttend(HttpServletRequest request, @PathVariable String id) {
+	@RequestMapping(value = "/objects/{id}/notAttend", method = RequestMethod.PUT)
+	public ResponseEntity<Object> notAttend(HttpServletRequest request,
+			@PathVariable String id) {
 		return performDomainOperation(request, id, "notAttend");
 	}
 
-	private ResponseEntity<Object> performDomainOperation(HttpServletRequest request, String id, String operation) {
+	private ResponseEntity<Object> performDomainOperation(
+			HttpServletRequest request, String id, String operation) {
 		try {
-			BaseDTObject obj = (BaseDTObject)storage.getObjectById(id);
-			Map<String,Object> parameters = new HashMap<String, Object>();
+			BaseDTObject obj = (BaseDTObject) storage.getObjectById(id);
+			Map<String, Object> parameters = new HashMap<String, Object>();
 			String userId = getUserId(request);
 			parameters.put("user", userId);
-			domainEngineClient.invokeDomainOperation(operation, obj.getDomainType(), obj.getDomainId(), parameters, null, null);
-			String oString = domainEngineClient.searchDomainObject(obj.getDomainType(), obj.getDomainId(), null);
+			domainEngineClient.invokeDomainOperation(operation,
+					obj.getDomainType(), obj.getDomainId(), parameters, null,
+					null);
+			String oString = domainEngineClient.searchDomainObject(
+					obj.getDomainType(), obj.getDomainId(), null);
 			DomainObject dObj = new DomainObject(oString);
-			if (obj instanceof EventObject){
+			if (obj instanceof EventObject) {
 				obj = EventProcessorImpl.convertEventObject(dObj, storage);
-				EventObject.filterUserData((EventObject)obj, userId);
-			}
-			else if (obj instanceof POIObject) {
+			} else if (obj instanceof POIObject) {
 				obj = EventProcessorImpl.convertPOIObject(dObj);
-			} 
-			else if (obj instanceof StoryObject){
+			} else if (obj instanceof StoryObject) {
 				obj = EventProcessorImpl.convertStoryObject(dObj, storage);
-				StoryObject.filterUserData((StoryObject)obj, userId);
 			}
-
 			storage.storeObject(obj);
+			obj.filterUserData(userId);
+
 			return new ResponseEntity<Object>(obj, HttpStatus.OK);
 		} catch (Exception e) {
-			logger.error("Failed to update object with id " +id+": "+e.getMessage());
+			logger.error("Failed to update object with id " + id + ": "
+					+ e.getMessage());
 			e.printStackTrace();
 			return new ResponseEntity<Object>(HttpStatus.METHOD_FAILURE);
 		}
 	}
+
 	@RequestMapping(method = RequestMethod.GET, value = "/objects")
-	public ResponseEntity<Map<String,List<BaseDTObject>>> getAllObject(HttpServletRequest request) throws Exception {
-		Map<String,List<BaseDTObject>> map = new HashMap<String, List<BaseDTObject>>();
+	public ResponseEntity<Map<String, List<BaseDTObject>>> getAllObject(
+			HttpServletRequest request) throws Exception {
+		Map<String, List<BaseDTObject>> map = new HashMap<String, List<BaseDTObject>>();
 		String userId = getUserId(request);
 		try {
 			ObjectFilter filterObj = null;
-			Map<String,Object> criteria = null;
+			Map<String, Object> criteria = null;
 			Class<?> clazz = null;
 			String filter = request.getParameter(SEARCH_FILTER_PARAM);
 			if (filter != null) {
-				filterObj = new ObjectMapper().readValue(filter, ObjectFilter.class);//Util.convert(filter, ObjectFilter.class);
-				criteria = filterObj.getCriteria() != null ? filterObj.getCriteria() : new HashMap<String, Object>();
+				filterObj = new ObjectMapper().readValue(filter,
+						ObjectFilter.class);// Util.convert(filter,
+											// ObjectFilter.class);
+				criteria = filterObj.getCriteria() != null ? filterObj
+						.getCriteria() : new HashMap<String, Object>();
 				if (filterObj.getDomainType() != null) {
 					criteria.put("domainType", filterObj.getDomainType());
 				}
-				if (filterObj.getTypes() != null && ! filterObj.getTypes().isEmpty()) {
-					criteria.put("type", Collections.singletonMap("$in", filterObj.getTypes()));
+				if (filterObj.getTypes() != null
+						&& !filterObj.getTypes().isEmpty()) {
+					criteria.put(
+							"type",
+							Collections.singletonMap("$in",
+									filterObj.getTypes()));
 				}
-				if (filterObj.isMyObjects()) criteria.put("attending", userId);
+				if (filterObj.isMyObjects())
+					criteria.put("attending", userId);
 				if (filterObj.getClassName() != null) {
 					try {
-						clazz = Thread.currentThread().getContextClassLoader().loadClass(filterObj.getClassName());
+						clazz = Thread.currentThread().getContextClassLoader()
+								.loadClass(filterObj.getClassName());
 					} catch (Exception e) {
-						logger.warn("Unknown class: "+filterObj.getClassName());
+						logger.warn("Unknown class: "
+								+ filterObj.getClassName());
 					}
 				}
 			} else {
@@ -156,47 +258,53 @@ public class ObjectController extends AbstractObjectController {
 				criteria = Collections.emptyMap();
 			}
 
-			if (filterObj.getSkip()==null) filterObj.setSkip(0);
+			if (filterObj.getSkip() == null)
+				filterObj.setSkip(0);
 
 			Circle circle = null;
 			if (filterObj.getCenter() != null && filterObj.getRadius() != null) {
-				circle = new Circle(filterObj.getCenter()[0], filterObj.getCenter()[1],filterObj.getRadius());
+				circle = new Circle(filterObj.getCenter()[0],
+						filterObj.getCenter()[1], filterObj.getRadius());
 			}
 			List<BaseDTObject> objects = null;
-			
+
 			if (filterObj.getLimit() != null) {
-				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getText(), filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getSort(), filterObj.getLimit(), filterObj.getSkip());
+				objects = storage.searchObjects((Class<BaseDTObject>) clazz,
+						circle, filterObj.getText(), filterObj.getFromTime(),
+						filterObj.getToTime(), criteria, filterObj.getSort(),
+						filterObj.getLimit(), filterObj.getSkip());
 			} else {
-				objects = storage.searchObjects((Class<BaseDTObject>)clazz, circle, filterObj.getText(), filterObj.getFromTime(), filterObj.getToTime(), criteria, filterObj.getSort());
+				objects = storage.searchObjects((Class<BaseDTObject>) clazz,
+						circle, filterObj.getText(), filterObj.getFromTime(),
+						filterObj.getToTime(), criteria, filterObj.getSort());
 			}
 			if (objects != null) {
 				for (BaseDTObject o : objects) {
-					List<BaseDTObject> protos = map.get(o.getClass().getCanonicalName());
+					List<BaseDTObject> protos = map.get(o.getClass()
+							.getCanonicalName());
 					if (protos == null) {
 						protos = new ArrayList<BaseDTObject>();
 						map.put(o.getClass().getCanonicalName(), protos);
 					}
-					if (o instanceof EventObject) {
-						EventObject.filterUserData((EventObject)o, userId);
-					}
-					if (o instanceof StoryObject) {
-						StoryObject.filterUserData((StoryObject)o, userId);
-					}
+					o.filterUserData(userId);
 					protos.add(o);
 				}
 			}
 		} catch (Exception e) {
-			logger.error("failed to find objects: "+ e.getMessage());
+			logger.error("failed to find objects: " + e.getMessage());
 			e.printStackTrace();
-			return new ResponseEntity<Map<String,List<BaseDTObject>>>(HttpStatus.METHOD_FAILURE);
+			return new ResponseEntity<Map<String, List<BaseDTObject>>>(
+					HttpStatus.METHOD_FAILURE);
 		}
-		return new ResponseEntity<Map<String,List<BaseDTObject>>>(map,HttpStatus.OK);
+		return new ResponseEntity<Map<String, List<BaseDTObject>>>(map,
+				HttpStatus.OK);
 	}
-	
+
 	@RequestMapping(method = RequestMethod.GET, value = "/objects/simple")
-	public ResponseEntity<Map<String,List<SimpleDTObject>>> getAllObjectSimple(HttpServletRequest request) throws Exception {
-		ResponseEntity<Map<String,List<BaseDTObject>>> all = getAllObject(request);
-		Map<String,List<SimpleDTObject>> map = new HashMap<String, List<SimpleDTObject>>();
+	public ResponseEntity<Map<String, List<SimpleDTObject>>> getAllObjectSimple(
+			HttpServletRequest request) throws Exception {
+		ResponseEntity<Map<String, List<BaseDTObject>>> all = getAllObject(request);
+		Map<String, List<SimpleDTObject>> map = new HashMap<String, List<SimpleDTObject>>();
 		if (all.getBody() != null) {
 			for (String key : all.getBody().keySet()) {
 				List<BaseDTObject> list = all.getBody().get(key);
@@ -205,17 +313,21 @@ public class ObjectController extends AbstractObjectController {
 					for (BaseDTObject o : list) {
 						SimpleDTObject so = new SimpleDTObject(o);
 						if (o instanceof POIObject) {
-							so.setAddress(POIData.getAddressString(((POIObject) o).getPoi()));
+							so.setAddress(POIData
+									.getAddressString(((POIObject) o).getPoi()));
 							so.setEntityType(Constants.ENTTIY_TYPE_POI);
-						} 
-						else if (o instanceof EventObject) {
+						} else if (o instanceof EventObject) {
 							so.setEntityType(Constants.ENTTIY_TYPE_EVENT);
 							POIObject poi = null;
 							try {
-								poi = storage.getObjectById(((EventObject) o).getPoiId(), POIObject.class);
+								poi = storage.getObjectById(
+										((EventObject) o).getPoiId(),
+										POIObject.class);
 							} catch (NotFoundException e) {
 							}
-							if (poi != null) so.setAddress(POIData.getAddressString(poi.getPoi()));
+							if (poi != null)
+								so.setAddress(POIData.getAddressString(poi
+										.getPoi()));
 						}
 						nlist.add(so);
 					}
@@ -223,8 +335,9 @@ public class ObjectController extends AbstractObjectController {
 				map.put(key, nlist);
 			}
 		}
-		return new ResponseEntity<Map<String,List<SimpleDTObject>>>(map, all.getStatusCode());
-		
+		return new ResponseEntity<Map<String, List<SimpleDTObject>>>(map,
+				all.getStatusCode());
+
 	}
 
 }

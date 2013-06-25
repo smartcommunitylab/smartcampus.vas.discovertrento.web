@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import eu.trentorise.smartcampus.dt.model.EventObject;
+import eu.trentorise.smartcampus.dt.model.POIObject;
 import eu.trentorise.smartcampus.dt.model.StoryObject;
 import eu.trentorise.smartcampus.presentation.common.util.Util;
 import eu.trentorise.smartcampus.presentation.data.BasicObject;
@@ -50,26 +51,30 @@ public class SyncController extends AbstractObjectController {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/sync")
 	public ResponseEntity<SyncData> synchronize(HttpServletRequest request, @RequestParam long since, @RequestBody Map<String,Object> obj) throws Exception{
-		String userId = getUserId(request);
-		SyncDataRequest syncReq = Util.convertRequest(obj, since);
-		// temporary workaround for older version: do not sync the mobility data.
-		if (syncReq.getSyncData().getExclude() == null) {
-			syncReq.getSyncData().setExclude(Collections.<String,Object>singletonMap("source", "smartplanner-transitstops"));
+		try {
+			String userId = getUserId(request);
+			SyncDataRequest syncReq = Util.convertRequest(obj, since);
+			// temporary workaround for older version: do not sync the mobility data.
+			if (syncReq.getSyncData().getExclude() == null) {
+				syncReq.getSyncData().setExclude(Collections.<String,Object>singletonMap("source", "smartplanner-transitstops"));
+			}
+			
+			// temporary workaround for family trento categories: do not sync 'comune', 'famiglia'
+			if (!"familytrento".equals(request.getHeader("APP_TOKEN"))) {
+				Map<String, Object> exclude = new HashMap<String, Object>(syncReq.getSyncData().getExclude());
+				exclude.put("source", Arrays.asList("smartplanner-transitstops","TrentinoFamiglia"));
+				exclude.put("type", "Comune");
+				syncReq.getSyncData().setExclude(exclude);
+			}
+			
+			SyncData result = storage.getSyncData(syncReq.getSince(), userId, syncReq.getSyncData().getInclude(), syncReq.getSyncData().getExclude());
+			filterResult(result, userId);
+			storage.cleanSyncData(syncReq.getSyncData(), userId);
+			return new ResponseEntity<SyncData>(result,HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
 		}
-		
-		// temporary workaround for family trento categories: do not sync 'comune', 'famiglia'
-		if (!"familytrento".equals(request.getHeader("APP_TOKEN"))) {
-			Map<String, Object> exclude = new HashMap<String, Object>(syncReq.getSyncData().getExclude());
-			exclude.put("source", Arrays.asList("smartplanner-transitstops","TrentinoFamiglia"));
-			exclude.put("type", "Comune");
-			syncReq.getSyncData().setExclude(exclude);
-		}
-		
-		SyncData result = storage.getSyncData(syncReq.getSince(), userId, syncReq.getSyncData().getInclude(), syncReq.getSyncData().getExclude());
-		filterResult(result, userId);
-		storage.cleanSyncData(syncReq.getSyncData(), userId);
-
-		return new ResponseEntity<SyncData>(result,HttpStatus.OK);
 	}
 
 	private void filterResult(SyncData result, String userId) {
@@ -85,13 +90,19 @@ public class SyncController extends AbstractObjectController {
 						iterator.remove();
 						continue;
 					}
-					EventObject.filterUserData((EventObject)event, userId);
+					event.filterUserData(userId);
 				}
 			}
 			list = result.getUpdated().get(StoryObject.class.getName());
 			if (list != null && !list.isEmpty()) {
 				for (BasicObject story : list) {
-					StoryObject.filterUserData((StoryObject)story, userId);
+					((StoryObject)story).filterUserData(userId);
+				}
+			}
+			list = result.getUpdated().get(POIObject.class.getName());
+			if (list != null && !list.isEmpty()) {
+				for (BasicObject poi : list) {
+					((POIObject)poi).filterUserData(userId);
 				}
 			}
 		}
