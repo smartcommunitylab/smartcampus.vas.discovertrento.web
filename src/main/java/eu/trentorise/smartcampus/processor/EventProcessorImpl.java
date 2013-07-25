@@ -398,7 +398,9 @@ public class EventProcessorImpl implements DomainUpdateListener {
 		updateLocation(eo, poiId, storage);
 
 		Map<String, Object> content = dObj.getContent();
-		eo.setAttendees((Integer) content.get("attendees"));
+		Object att = content.get("attendees");
+		if (att != null && att instanceof Integer) eo.setAttendees((Integer) att);
+		else if (att != null && att instanceof Double) eo.setAttendees(((Double)att).intValue());
 		if (content.get("attending") != null) {
 			eo.setAttending((List<String>) content.get("attending"));
 		}
@@ -491,7 +493,9 @@ public class EventProcessorImpl implements DomainUpdateListener {
 		}
 
 		Map<String, Object> content = dObj.getContent();
-		so.setAttendees((Integer) content.get("attendees"));
+		Object att = content.get("attendees");
+		if (att != null && att instanceof Integer) so.setAttendees((Integer) att);
+		else if (att != null && att instanceof Double) so.setAttendees(((Double)att).intValue());
 		if (content.get("attending") != null) {
 			so.setAttending((List<String>) content.get("attending"));
 		}
