@@ -59,9 +59,12 @@ public class SyncController extends AbstractObjectController {
 			    (syncReq.getSyncData().getInclude() == null || syncReq.getSyncData().getInclude().isEmpty())) {
 				// temporary workaround for family trento categories: do not sync 'comune', 'famiglia'
 				if (!"familytrento".equals(request.getHeader("APP_TOKEN"))) {
-					Map<String, Object> exclude = new HashMap<String, Object>(syncReq.getSyncData().getExclude());
+					Map<String, Object> exclude = new HashMap<String, Object>();
+					if (syncReq.getSyncData().getExclude() != null) {
+						exclude.putAll(syncReq.getSyncData().getExclude());
+					}
 					exclude.put("source", Arrays.asList("smartplanner-transitstops","TrentinoFamiglia"));
-					exclude.put("type", "Comune");
+					exclude.put("type", Arrays.asList("Comune","Family", "Family - Organizations"));
 					syncReq.getSyncData().setExclude(exclude);
 				} else {
 					syncReq.getSyncData().setExclude(Collections.<String,Object>singletonMap("source", "smartplanner-transitstops"));
