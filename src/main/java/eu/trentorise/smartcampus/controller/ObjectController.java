@@ -141,10 +141,6 @@ public class ObjectController extends AbstractObjectController {
 		try {
 			BaseDTObject obj = (BaseDTObject) storage.getObjectById(id);
 			String userId = getUserId(request);
-			if (obj != null && obj.getCommunityData() != null && obj.getCommunityData().getFollowing() != null && obj.getCommunityData().getFollowing().containsKey(userId)) {
-				obj.filterUserData(userId);
-				return new ResponseEntity<Object>(obj, HttpStatus.OK);
-			}
 			String operation = "follow";
 			Map<String, Object> parameters = new HashMap<String, Object>();
 			parameters.put("user", userId);
